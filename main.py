@@ -121,21 +121,28 @@ def handle_message(event):
     settings = load_settings()
     user_id = event.source.user_id
     text = event.message.text.strip()
+    parent_id = settings.get('parent_user_id')
+    son_id = settings.get('son_user_id')
+    logger.info(f'受信: user_id={user_id}, parent_id={parent_id}, son_id={son_id}, text={text}')
 
     with ApiClient(configuration) as api_client:
         api = MessagingApi(api_client)
 
         # 息子の初回登録
-        if not settings.get('son_user_id') and user_id != settings.get('parent_user_id'):
+        if not son_id and user_id != parent_id:
             settings['son_user_id'] = user_id
             save_settings(settings)
             _reply(api, event.reply_token, '登録完了！毎日12時に問題を送るよ。頑張ってね！')
             return
 
-        if user_id == settings.get('parent_user_id'):
+        if user_id == parent_id:
+            logger.info('親として処理')
             _handle_parent(text, settings, api, event.reply_token)
-        elif user_id == settings.get('son_user_id'):
+        elif user_id == son_id:
+            logger.info('息子として処理')
             _handle_son(text, settings, api, event.reply_token)
+        else:
+            logger.warning(f'未登録ユーザー: {user_id}')
 
 
 def _handle_parent(text, settings, api, reply_token):
