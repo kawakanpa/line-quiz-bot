@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+settings.json
+today_questions.json
