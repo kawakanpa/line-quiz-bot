@@ -198,7 +198,7 @@ def grade_and_format(questions, answers):
     # Parent: レポート
     today = datetime.now()
     lines = [
-        f'【息子の回答】{today.month}月{today.day}日',
+        f'【ゆうの回答】{today.month}月{today.day}日',
         f'正解率：{correct}/{total}（{pct}%）',
         ''
     ]
