@@ -85,7 +85,7 @@ def _generate_math(count, grade, difficulty, math_fields):
 def _generate_subject(subject, count, grade, difficulty):
     guidance = {
         '国語': 'ことわざ・慣用句、文法、漢字、文学作品など',
-        '英語': '単語・熟語、文法、短文など（長文読解は避ける）',
+        '英語': '英検4級レベル（単語・熟語、基本文法、短文穴埋めなど）',
         '社会': '歴史・地理・公民（中学範囲）',
         '理科': '物理・化学・生物・地学（中学範囲、実験の図は使わない）',
     }
@@ -109,7 +109,7 @@ def _generate_subject(subject, count, grade, difficulty):
   ]
 }}
 
-難易度：{difficulty}、学年：{grade}
+{'難易度：英検4級レベル' if subject == '英語' else f'難易度：{difficulty}、学年：{grade}'}
 全{count}問を必ず含めること。"""
 
     return _call_groq(prompt)
