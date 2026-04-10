@@ -13,7 +13,7 @@ from linebot.v3.exceptions import InvalidSignatureError
 from dotenv import load_dotenv
 from config import load_settings, save_settings
 from quiz import (generate_daily_questions, format_question_message, grade_and_format,
-                  generate_retry_questions, format_retry_message, grade_retry, _is_correct)
+                  generate_retry_questions, format_retry_message, grade_retry)
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -253,7 +253,7 @@ def _handle_son(text, settings, api, reply_token):
     math_questions = [q for q in questions if q['subject'] == '数学']
     math_answers = [answers[i] for i, q in enumerate(questions) if q['subject'] == '数学']
     wrong_math = [q for q, a in zip(math_questions, math_answers)
-                  if not _is_correct(a, q['answer'], q['type'])]
+                  if a.strip().upper() != q['answer'].strip().upper()]
 
     if wrong_math:
         new_retry = generate_retry_questions(wrong_math, settings)
