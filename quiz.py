@@ -207,7 +207,7 @@ def grade_and_format(questions, answers):
         q_text = r['q']['question'][:25] + '...' if len(r['q']['question']) > 25 else r['q']['question']
         lines.append(f'{r["num"]}. {mark} {r["q"]["subject"]}[{r["q"]["field"]}]')
         lines.append(f'   問: {q_text}')
-        lines.append(f'   息子: {r["submitted"]}　正解: {r["q"]["answer"]}')
+        lines.append(f'   ゆう: {r["submitted"]}　正解: {r["q"]["answer"]}')
         lines.append('')
     parent_msg = '\n'.join(lines)
 
