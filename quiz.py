@@ -13,8 +13,14 @@ logger = logging.getLogger(__name__)
 client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
 MODEL = 'llama-3.3-70b-versatile'
 
-CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'
 SUBJECT_ORDER = ['数学', '国語', '社会', '理科', '英語']
+
+THREE_CHOICE_INSTRUCTION = """
+問題形式：全問3択問題（A/B/Cの3択）
+- 図・グラフ・絵が必要な問題は絶対に作らないこと
+- 文章だけで完結する問題にすること
+- 選択肢はA. ～  B. ～  C. ～ の形式で問題文に含めること
+"""
 
 
 def generate_daily_questions(subjects_today, settings):
@@ -34,6 +40,7 @@ def generate_daily_questions(subjects_today, settings):
                 questions = _generate_subject(subject, count, grade, difficulty)
             for q in questions:
                 q.setdefault('subject', subject)
+                q['type'] = 'multiple_choice'
             all_questions.extend(questions)
             logger.info(f'{subject}: {len(questions)}問生成')
         except Exception as e:
@@ -44,7 +51,7 @@ def generate_daily_questions(subjects_today, settings):
 
 def _generate_math(count, grade, difficulty, math_fields):
     n_fields = 5
-    q_per_field = count // n_fields  # 1 or 2
+    q_per_field = count // n_fields
     selected = random.sample(math_fields, min(n_fields, len(math_fields)))
     fields_str = '\n'.join([f'- {f}: {q_per_field}問' for f in selected])
 
@@ -53,15 +60,17 @@ def _generate_math(count, grade, difficulty, math_fields):
 各分野から指定数の問題を作成：
 {fields_str}
 
+{THREE_CHOICE_INSTRUCTION}
+
 以下のJSON形式のみで返してください（他の文章不要）：
 {{
   "questions": [
     {{
       "subject": "数学",
       "field": "分野名",
-      "question": "問題文",
-      "type": "numeric",
-      "answer": "数値または文字式（スペースなし、例：3、-5、4a+3b）",
+      "question": "問題文\\nA. 選択肢1  B. 選択肢2  C. 選択肢3",
+      "type": "multiple_choice",
+      "answer": "A か B か C",
       "explanation": "解き方（2文程度、計算過程を含む）"
     }}
   ]
@@ -76,15 +85,15 @@ def _generate_math(count, grade, difficulty, math_fields):
 def _generate_subject(subject, count, grade, difficulty):
     guidance = {
         '国語': 'ことわざ・慣用句、文法、漢字、文学作品など',
-        '英語': '単語・熟語、文法、短文読解など',
+        '英語': '単語・熟語、文法、短文など（長文読解は避ける）',
         '社会': '歴史・地理・公民（中学範囲）',
-        '理科': '物理・化学・生物・地学（中学範囲）',
+        '理科': '物理・化学・生物・地学（中学範囲、実験の図は使わない）',
     }
 
     prompt = f"""あなたは中学{subject}の教師です。{grade}の{subject}問題を{count}問作成してください。
 分野の参考：{guidance.get(subject, '')}
 
-問題タイプ：○✗問題（type: "ox"）と4択問題（type: "multiple_choice"）を適切に混ぜてください。
+{THREE_CHOICE_INSTRUCTION}
 
 以下のJSON形式のみで返してください（他の文章不要）：
 {{
@@ -92,9 +101,9 @@ def _generate_subject(subject, count, grade, difficulty):
     {{
       "subject": "{subject}",
       "field": "分野名",
-      "question": "問題文（4択の場合：A. xxx  B. xxx  C. xxx  D. xxxを問題文に含める）",
-      "type": "ox" or "multiple_choice",
-      "answer": "○ か ✗ か A/B/C/D",
+      "question": "問題文\\nA. 選択肢1  B. 選択肢2  C. 選択肢3",
+      "type": "multiple_choice",
+      "answer": "A か B か C",
       "explanation": "解説（なぜその答えか、2-3文）"
     }}
   ]
@@ -133,42 +142,29 @@ def format_question_message(questions, weekday):
         if subject not in grouped:
             continue
         lines.append(f'━━━ {subject} ━━━')
-        for q in grouped[subject]:
-            lines.append(f'{CIRCLED[n]}[{q["field"]}] {q["question"]}')
-            n += 1
         lines.append('')
+        for q in grouped[subject]:
+            n += 1
+            lines.append(f'{n}. [{q["field"]}] {q["question"]}')
+            lines.append('')
 
-    lines.append('答えを番号順にカンマ区切りで送ってね')
-    lines.append(f'例（{len(questions)}個）：3, ✗, A, -5, ○, B...')
-    lines.append('※スペースなしで入力してね')
+    lines.append('─' * 20)
+    lines.append('【解答欄】')
+    for i in range(1, n + 1):
+        lines.append(f'{i}. (    )')
+    lines.append('')
+    lines.append('答えをA/B/Cで番号順にカンマ区切りで送ってね')
+    lines.append(f'例：A,B,C,A,B...')
 
     return '\n'.join(lines)
 
 
 def _normalize(answer_str, question_type):
-    a = answer_str.strip()
-    if question_type == 'numeric':
-        return a.replace(' ', '').replace('　', '')
-    elif question_type == 'ox':
-        if a in ['○', 'o', 'O', 'まる', '丸', '⭕', '◯']:
-            return '○'
-        if a in ['✗', '×', 'x', 'X', 'ばつ', 'バツ', '✕', '✘']:
-            return '✗'
-        return a
-    elif question_type == 'multiple_choice':
-        return a.upper()
-    return a
+    return answer_str.strip().upper()
 
 
 def _is_correct(submitted, expected, question_type):
-    sub = _normalize(submitted, question_type)
-    exp = _normalize(expected, question_type)
-    if question_type == 'numeric':
-        try:
-            return abs(float(sub) - float(exp)) < 0.01
-        except ValueError:
-            return sub == exp
-    return sub == exp
+    return _normalize(submitted, question_type) == _normalize(expected, question_type)
 
 
 def grade_and_format(questions, answers):
@@ -187,19 +183,17 @@ def grade_and_format(questions, answers):
     # Son: 採点結果
     lines = [f'【採点結果】{correct}/{total}問正解（{pct}%）', '']
     for r in results:
-        c = CIRCLED[r['num'] - 1]
         mark = '✓' if r['ok'] else '✗'
         if r['ok']:
-            lines.append(f'{c} {mark} {r["q"]["subject"]}（{r["q"]["field"]}）')
+            lines.append(f'{r["num"]}. {mark} {r["q"]["subject"]}（{r["q"]["field"]}）')
         else:
-            lines.append(f'{c} {mark} {r["q"]["subject"]}（{r["q"]["field"]}）→ 正解：{r["q"]["answer"]}')
+            lines.append(f'{r["num"]}. {mark} {r["q"]["subject"]}（{r["q"]["field"]}）→ 正解：{r["q"]["answer"]}')
     result_msg = '\n'.join(lines)
 
     # Son: 解説
     lines = ['【解説】', '']
     for r in results:
-        c = CIRCLED[r['num'] - 1]
-        lines.append(f'{c} {r["q"]["subject"]}（{r["q"]["field"]}）')
+        lines.append(f'{r["num"]}. {r["q"]["subject"]}（{r["q"]["field"]}）')
         lines.append(r['q']['explanation'])
         lines.append('')
     explanation_msg = '\n'.join(lines)
@@ -212,10 +206,9 @@ def grade_and_format(questions, answers):
         ''
     ]
     for r in results:
-        c = CIRCLED[r['num'] - 1]
         mark = '✓' if r['ok'] else '✗'
         q_text = r['q']['question'][:25] + '...' if len(r['q']['question']) > 25 else r['q']['question']
-        lines.append(f'{c}{mark} {r["q"]["subject"]}[{r["q"]["field"]}]')
+        lines.append(f'{r["num"]}. {mark} {r["q"]["subject"]}[{r["q"]["field"]}]')
         lines.append(f'   問: {q_text}')
         lines.append(f'   息子: {r["submitted"]}　正解: {r["q"]["answer"]}')
         lines.append('')
