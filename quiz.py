@@ -88,7 +88,7 @@ def _generate_subject(subject, count, grade, difficulty):
         '国語': 'ことわざ・慣用句、文法、漢字、文学作品など',
         '英語': '英検4級レベル（単語・熟語、基本文法、短文穴埋めなど）',
         '社会': '歴史・地理・公民（中学範囲）',
-        '理科': '物理・化学・生物・地学（中学範囲、実験の図は使わない）',
+        '理科': '計算問題を中心に出題（オームの法則・速さ・密度・圧力・化学計算など）。図や実験装置が必要な問題は除外。',
     }
 
     prompt = f"""あなたは中学{subject}の教師です。{grade}の{subject}問題を{count}問作成してください。
@@ -115,6 +115,112 @@ def _generate_subject(subject, count, grade, difficulty):
 全{count}問を必ず含めること。"""
 
     return _call_groq(prompt)
+
+
+def generate_retry_questions(wrong_questions, settings):
+    """間違えた数学問題を数字を変えて再出題"""
+    grade = settings['grade']
+    difficulty = settings['difficulty']
+    retry_questions = []
+    for q in wrong_questions:
+        prompt = f"""あなたは中学数学の教師です。
+以下の問題と全く同じ解き方・同じ分野の問題を、数字だけ変えて1問作成してください。
+
+元の問題: {q['question']}
+分野: {q['field']}
+難易度: {difficulty}、学年: {grade}
+
+問題形式：3択（a/b/c）
+選択肢はa. ～  b. ～  c. ～ の形式で問題文に含めること
+図・グラフ不要の文章問題のみ
+問題文は簡潔に（「〜はどれか」など）
+
+以下のJSON形式のみで返してください：
+{{
+  "questions": [
+    {{
+      "subject": "数学",
+      "field": "{q['field']}",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3",
+      "type": "multiple_choice",
+      "answer": "a か b か c",
+      "explanation": "解き方（2文程度、計算過程を含む）"
+    }}
+  ]
+}}"""
+        try:
+            questions = _call_groq(prompt)
+            if questions:
+                questions[0].setdefault('subject', '数学')
+                questions[0]['type'] = 'multiple_choice'
+                retry_questions.append(questions[0])
+        except Exception as e:
+            logger.error(f'再出題生成エラー: {e}')
+    return retry_questions
+
+
+def format_retry_message(questions, round_num):
+    """再挑戦問題のメッセージ"""
+    lines = [f'【数学 再挑戦 第{round_num}回】', '']
+    for i, q in enumerate(questions, 1):
+        lines.append(f'{i}. [{q["field"]}] {q["question"]}')
+        lines.append('')
+    lines.append(f'答えをa/b/cで{len(questions)}個カンマ区切りで送ってね')
+    lines.append('例：a,b,c...')
+    return '\n'.join(lines)
+
+
+def grade_retry(questions, answers):
+    """再挑戦問題の採点"""
+    results = []
+    correct = 0
+    wrong_questions = []
+
+    for i, (q, a) in enumerate(zip(questions, answers)):
+        ok = _is_correct(a, q['answer'], q['type'])
+        if ok:
+            correct += 1
+        else:
+            wrong_questions.append(q)
+        results.append({'num': i + 1, 'q': q, 'submitted': a, 'ok': ok})
+
+    total = len(questions)
+
+    # Son: 採点結果
+    lines = [f'【再挑戦 採点結果】{correct}/{total}問正解', '']
+    for r in results:
+        mark = '✓' if r['ok'] else '✗'
+        if r['ok']:
+            lines.append(f'{r["num"]}. {mark} {r["q"]["field"]}')
+        else:
+            lines.append(f'{r["num"]}. {mark} {r["q"]["field"]} → 正解：{r["q"]["answer"]}')
+    result_msg = '\n'.join(lines)
+
+    # Son: 解説
+    lines = ['【解説】', '']
+    for r in results:
+        lines.append(f'{r["num"]}. {r["q"]["field"]}')
+        lines.append(r['q']['explanation'])
+        lines.append('')
+    explanation_msg = '\n'.join(lines)
+
+    # Parent: レポート
+    today = datetime.now()
+    lines = [
+        f'【ゆうの再挑戦】{today.month}月{today.day}日',
+        f'正解率：{correct}/{total}',
+        ''
+    ]
+    for r in results:
+        mark = '✓' if r['ok'] else '✗'
+        q_text = r['q']['question'][:25] + '...' if len(r['q']['question']) > 25 else r['q']['question']
+        lines.append(f'{r["num"]}. {mark} [{r["q"]["field"]}]')
+        lines.append(f'   問: {q_text}')
+        lines.append(f'   ゆう: {r["submitted"]}　正解: {r["q"]["answer"]}')
+        lines.append('')
+    parent_msg = '\n'.join(lines)
+
+    return result_msg, explanation_msg, parent_msg, wrong_questions
 
 
 def _call_groq(prompt):
