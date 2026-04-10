@@ -19,7 +19,7 @@ THREE_CHOICE_INSTRUCTION = """
 問題形式：全問3択問題（A/B/Cの3択）
 - 図・グラフ・絵が必要な問題は絶対に作らないこと
 - 文章だけで完結する問題にすること
-- 選択肢はA. ～  B. ～  C. ～ の形式で問題文に含めること
+- 選択肢はa. ～  b. ～  c. ～ の形式で問題文に含めること
 """
 
 
@@ -68,9 +68,9 @@ def _generate_math(count, grade, difficulty, math_fields):
     {{
       "subject": "数学",
       "field": "分野名",
-      "question": "問題文\\nA. 選択肢1  B. 選択肢2  C. 選択肢3",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3",
       "type": "multiple_choice",
-      "answer": "A か B か C",
+      "answer": "a か b か c",
       "explanation": "解き方（2文程度、計算過程を含む）"
     }}
   ]
@@ -101,9 +101,9 @@ def _generate_subject(subject, count, grade, difficulty):
     {{
       "subject": "{subject}",
       "field": "分野名",
-      "question": "問題文\\nA. 選択肢1  B. 選択肢2  C. 選択肢3",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3",
       "type": "multiple_choice",
-      "answer": "A か B か C",
+      "answer": "a か b か c",
       "explanation": "解説（なぜその答えか、2-3文）"
     }}
   ]
@@ -153,8 +153,8 @@ def format_question_message(questions, weekday):
     for i in range(1, n + 1):
         lines.append(f'{i}. (    )')
     lines.append('')
-    lines.append('答えをA/B/Cで番号順にカンマ区切りで送ってね')
-    lines.append(f'例：A,B,C,A,B...')
+    lines.append('答えをa/b/cで番号順にカンマ区切りで送ってね')
+    lines.append(f'例：a,b,c,a,b...')
 
     return '\n'.join(lines)
 
