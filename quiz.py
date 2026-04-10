@@ -77,6 +77,7 @@ def _generate_math(count, grade, difficulty, math_fields):
 }}
 
 難易度：{difficulty}
+問題文は「〜はいくらか」「〜を求めよ」「〜はどれか」のように簡潔に終わること。「どうなるでしょうか」などの冗長な表現は使わないこと。
 全{count}問を必ず含めること。"""
 
     return _call_groq(prompt)
@@ -110,6 +111,7 @@ def _generate_subject(subject, count, grade, difficulty):
 }}
 
 {'難易度：英検4級レベル' if subject == '英語' else f'難易度：{difficulty}、学年：{grade}'}
+問題文は簡潔に終わること。「どうなるでしょうか」「何と言いますか」などの冗長な表現は使わず、「〜はどれか」「〜を選べ」「〜はいつか」のように短くまとめること。
 全{count}問を必ず含めること。"""
 
     return _call_groq(prompt)
@@ -148,11 +150,6 @@ def format_question_message(questions, weekday):
             lines.append(f'{n}. [{q["field"]}] {q["question"]}')
             lines.append('')
 
-    lines.append('─' * 20)
-    lines.append('【解答欄】')
-    for i in range(1, n + 1):
-        lines.append(f'{i}. (    )')
-    lines.append('')
     lines.append('答えをa/b/cで番号順にカンマ区切りで送ってね')
     lines.append(f'例：a,b,c,a,b...')
 
