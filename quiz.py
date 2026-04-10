@@ -32,6 +32,8 @@ def generate_daily_questions(subjects_today, settings):
                 questions = _generate_math(count, grade, difficulty, math_fields)
             else:
                 questions = _generate_subject(subject, count, grade, difficulty)
+            for q in questions:
+                q.setdefault('subject', subject)
             all_questions.extend(questions)
             logger.info(f'{subject}: {len(questions)}問生成')
         except Exception as e:
