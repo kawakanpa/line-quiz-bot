@@ -291,7 +291,7 @@ def _parse_answers(text):
     answers = []
     for p in parts:
         # 「1.a」「1.a」「1）a」などから答え部分だけ抽出
-        m = re.match(r'^\d+[.)）\s]*([a-cA-C○✗×])', p)
+        m = re.match(r'^\d+[.)）\s]*([a-cA-C○✗×])', p) or re.match(r'^\d+([a-cA-C])', p)
         if m:
             answers.append(m.group(1))
         else:
