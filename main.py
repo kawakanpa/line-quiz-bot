@@ -285,12 +285,18 @@ def _handle_son(text, settings, api, reply_token):
 
 
 def _parse_answers(text):
-    """1.a,2.b,3.c または a,b,c 形式の両方に対応"""
-    text = text.replace('、', ',').replace('，', ',').replace('　', '')
-    parts = [p.strip() for p in text.split(',')]
+    """1a 2b 3c / 1.a,2.b / a,b,c 形式（全角・半角混在）に対応"""
+    # 全角→半角変換
+    text = text.translate(str.maketrans(
+        '０１２３４５６７８９ａｂｃＡＢＣ，．：　',
+        '0123456789abcABC,.: '
+    ))
+    text = text.replace('、', ',').replace('，', ',')
+    # スペース区切りをカンマに統一
+    text = re.sub(r'[\s,]+', ',', text.strip())
+    parts = [p.strip() for p in text.split(',') if p.strip()]
     answers = []
     for p in parts:
-        # 「1.a」「1.a」「1）a」などから答え部分だけ抽出
         m = re.match(r'^\d+[.)）\s]*([a-cA-C○✗×])', p) or re.match(r'^\d+([a-cA-C])', p)
         if m:
             answers.append(m.group(1))
