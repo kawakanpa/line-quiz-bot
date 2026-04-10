@@ -12,7 +12,8 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.exceptions import InvalidSignatureError
 from dotenv import load_dotenv
 from config import load_settings, save_settings
-from quiz import generate_daily_questions, format_question_message, grade_and_format
+from quiz import (generate_daily_questions, format_question_message, grade_and_format,
+                  generate_retry_questions, format_retry_message, grade_retry, _is_correct)
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -47,18 +48,18 @@ def save_today_data(questions):
     data = {
         'date': datetime.now().strftime('%Y-%m-%d'),
         'questions': questions,
-        'answered': False
+        'answered': False,
+        'math_retry_questions': None,
+        'math_retry_round': 0,
+        'math_mission_complete': False
     }
     with open(TODAY_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def mark_answered():
-    data = get_today_data()
-    if data:
-        data['answered'] = True
-        with open(TODAY_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+def update_today_data(data):
+    with open(TODAY_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 # ── エンドポイント ────────────────────────────────────
@@ -101,6 +102,17 @@ def cron():
 
     logger.info(f'問題送信完了: {len(questions)}問')
     return jsonify({'status': 'ok', 'questions': len(questions)})
+
+
+@app.route('/reset')
+def reset():
+    if request.args.get('token') != CRON_SECRET:
+        abort(403)
+    import glob
+    for f in ['today_questions.json', 'settings.json']:
+        if os.path.exists(f):
+            os.remove(f)
+    return jsonify({'status': 'ok', 'message': 'リセット完了'})
 
 
 @app.route('/webhook', methods=['POST'])
@@ -185,6 +197,43 @@ def _handle_son(text, settings, api, reply_token):
         _reply(api, reply_token, '今日の問題はまだ来てないよ！12時になったら届くから待ってね。')
         return
 
+    retry_questions = today_data.get('math_retry_questions')
+
+    # ── 再挑戦モード ──────────────────────────────────
+    if retry_questions is not None:
+        answers = [a.strip() for a in text.replace('、', ',').replace('，', ',').split(',')]
+        if len(answers) != len(retry_questions):
+            _reply(api, reply_token,
+                   f'再挑戦問題は{len(retry_questions)}問だよ。{len(retry_questions)}個の答えをカンマ区切りで送ってね。\n例：a,b,c')
+            return
+
+        round_num = today_data.get('math_retry_round', 1)
+        result_msg, explanation_msg, parent_msg, wrong_questions = grade_retry(retry_questions, answers)
+
+        _reply(api, reply_token, result_msg)
+        api.push_message(PushMessageRequest(
+            to=settings['son_user_id'], messages=[TextMessage(text=explanation_msg)]))
+        api.push_message(PushMessageRequest(
+            to=settings['parent_user_id'], messages=[TextMessage(text=parent_msg)]))
+
+        if wrong_questions:
+            new_retry = generate_retry_questions(wrong_questions, settings)
+            today_data['math_retry_questions'] = new_retry
+            today_data['math_retry_round'] = round_num + 1
+            update_today_data(today_data)
+            api.push_message(PushMessageRequest(
+                to=settings['son_user_id'],
+                messages=[TextMessage(text=format_retry_message(new_retry, round_num + 1))]))
+        else:
+            today_data['math_retry_questions'] = None
+            today_data['math_mission_complete'] = True
+            update_today_data(today_data)
+            api.push_message(PushMessageRequest(
+                to=settings['son_user_id'],
+                messages=[TextMessage(text='Mission Complete！\n数学全問正解おめでとう！')]))
+        return
+
+    # ── 初回回答モード ────────────────────────────────
     if today_data.get('answered'):
         _reply(api, reply_token, '今日はもう答えたよ！また明日ね。')
         return
@@ -194,26 +243,44 @@ def _handle_son(text, settings, api, reply_token):
 
     if len(answers) != len(questions):
         _reply(api, reply_token,
-               f'問題数は{len(questions)}問だよ。{len(questions)}個の答えをカンマ区切りで送ってね。\n例：3, ✗, A, -5, ○')
+               f'問題数は{len(questions)}問だよ。{len(questions)}個の答えをカンマ区切りで送ってね。\n例：a,b,c,a,b...')
         return
 
     result_msg, explanation_msg, parent_msg = grade_and_format(questions, answers)
-    mark_answered()
+    today_data['answered'] = True
 
-    # 息子に採点結果を返信（無料）
+    # 間違えた数学問題を特定
+    math_questions = [q for q in questions if q['subject'] == '数学']
+    math_answers = [answers[i] for i, q in enumerate(questions) if q['subject'] == '数学']
+    wrong_math = [q for q, a in zip(math_questions, math_answers)
+                  if not _is_correct(a, q['answer'], q['type'])]
+
+    if wrong_math:
+        new_retry = generate_retry_questions(wrong_math, settings)
+        today_data['math_retry_questions'] = new_retry
+        today_data['math_retry_round'] = 1
+        today_data['math_mission_complete'] = False
+    else:
+        today_data['math_retry_questions'] = None
+        today_data['math_mission_complete'] = True
+
+    update_today_data(today_data)
+
     _reply(api, reply_token, result_msg)
-
-    # 息子に解説をプッシュ
     api.push_message(PushMessageRequest(
-        to=settings['son_user_id'],
-        messages=[TextMessage(text=explanation_msg)]
-    ))
+        to=settings['son_user_id'], messages=[TextMessage(text=explanation_msg)]))
 
-    # 親にレポートをプッシュ
+    if wrong_math:
+        api.push_message(PushMessageRequest(
+            to=settings['son_user_id'],
+            messages=[TextMessage(text=format_retry_message(today_data['math_retry_questions'], 1))]))
+    else:
+        api.push_message(PushMessageRequest(
+            to=settings['son_user_id'],
+            messages=[TextMessage(text='Mission Complete！\n数学全問正解おめでとう！')]))
+
     api.push_message(PushMessageRequest(
-        to=settings['parent_user_id'],
-        messages=[TextMessage(text=parent_msg)]
-    ))
+        to=settings['parent_user_id'], messages=[TextMessage(text=parent_msg)]))
 
 
 def _reply(api, reply_token, text):
