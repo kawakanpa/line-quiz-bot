@@ -165,8 +165,8 @@ def format_retry_message(questions, round_num):
     for i, q in enumerate(questions, 1):
         lines.append(f'{i}. [{q["field"]}] {q["question"]}')
         lines.append('')
-    lines.append(f'答えをa/b/cで{len(questions)}個カンマ区切りで送ってね')
-    lines.append('例：a,b,c...')
+    lines.append('答えを番号付きカンマ区切りで送ってね')
+    lines.append(f'例：1.a,2.b,3.c...')
     return '\n'.join(lines)
 
 
@@ -256,8 +256,8 @@ def format_question_message(questions, weekday):
             lines.append(f'{n}. [{q["field"]}] {q["question"]}')
             lines.append('')
 
-    lines.append('答えをa/b/cで番号順にカンマ区切りで送ってね')
-    lines.append(f'例：a,b,c,a,b...')
+    lines.append('答えを番号付きカンマ区切りで送ってね')
+    lines.append(f'例：1.a,2.b,3.c,4.a...')
 
     return '\n'.join(lines)
 

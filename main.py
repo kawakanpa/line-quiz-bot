@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from linebot.v3 import WebhookHandler
@@ -201,7 +202,7 @@ def _handle_son(text, settings, api, reply_token):
 
     # ── 再挑戦モード ──────────────────────────────────
     if retry_questions is not None:
-        answers = [a.strip() for a in text.replace('、', ',').replace('，', ',').split(',')]
+        answers = _parse_answers(text)
         if len(answers) != len(retry_questions):
             _reply(api, reply_token,
                    f'再挑戦問題は{len(retry_questions)}問だよ。{len(retry_questions)}個の答えをカンマ区切りで送ってね。\n例：a,b,c')
@@ -281,6 +282,21 @@ def _handle_son(text, settings, api, reply_token):
 
     api.push_message(PushMessageRequest(
         to=settings['parent_user_id'], messages=[TextMessage(text=parent_msg)]))
+
+
+def _parse_answers(text):
+    """1.a,2.b,3.c または a,b,c 形式の両方に対応"""
+    text = text.replace('、', ',').replace('，', ',').replace('　', '')
+    parts = [p.strip() for p in text.split(',')]
+    answers = []
+    for p in parts:
+        # 「1.a」「1.a」「1）a」などから答え部分だけ抽出
+        m = re.match(r'^\d+[.)）\s]*([a-cA-C○✗×])', p)
+        if m:
+            answers.append(m.group(1))
+        else:
+            answers.append(p)
+    return answers
 
 
 def _reply(api, reply_token, text):
