@@ -240,7 +240,7 @@ def _handle_son(text, settings, api, reply_token):
         return
 
     questions = today_data['questions']
-    answers = [a.strip() for a in text.replace('、', ',').replace('，', ',').split(',')]
+    answers = _parse_answers(text)
 
     if len(answers) != len(questions):
         _reply(api, reply_token,
