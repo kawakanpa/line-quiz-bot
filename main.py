@@ -24,7 +24,7 @@ app = Flask(__name__)
 
 CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
 CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
-CRON_SECRET = os.environ.get('CRON_SECRET', 'kawabata-quiz-2026')
+CRON_SECRET = os.environ.get('CRON_SECRET')
 
 handler = WebhookHandler(CHANNEL_SECRET)
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
