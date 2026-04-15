@@ -1,2 +1,5 @@
+.env
 settings.json
 today_questions.json
+__pycache__/
+*.pyc
