@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from groq import Groq
 from dotenv import load_dotenv
+from config import DIFFICULTY_MAP
 
 load_dotenv()
 
@@ -25,7 +26,7 @@ THREE_CHOICE_INSTRUCTION = """
 
 def generate_daily_questions(subjects_today, settings):
     grade = settings['grade']
-    difficulty = settings['difficulty']
+    difficulty = DIFFICULTY_MAP.get(settings['difficulty'], settings['difficulty'])
     math_fields = settings['math_fields'].get(grade, settings['math_fields']['中学1年'])
 
     all_questions = []
@@ -120,7 +121,7 @@ def _generate_subject(subject, count, grade, difficulty):
 def generate_retry_questions(wrong_questions, settings):
     """間違えた数学問題を数字を変えて再出題"""
     grade = settings['grade']
-    difficulty = settings['difficulty']
+    difficulty = DIFFICULTY_MAP.get(settings['difficulty'], settings['difficulty'])
     retry_questions = []
     for q in wrong_questions:
         prompt = f"""あなたは中学数学の教師です。
