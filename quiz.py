@@ -18,6 +18,7 @@ MODEL = 'llama-3.3-70b-versatile'
 SUBJECT_ORDER = ['数学', '国語', '社会', '理科', '英語']
 MATH_BANK_FILE = 'math_problems.json'
 MATH_PAGE_BANK_FILE = 'math_page_bank.json'
+SCIENCE_BANK_FILE = 'science_problems.json'
 
 FIVE_CHOICE_INSTRUCTION = """
 問題形式：全問5択問題（a/b/c/d/eの5択）
@@ -120,10 +121,43 @@ JSON形式のみで返してください：
     return questions
 
 
+def _load_science_bank():
+    if not os.path.exists(SCIENCE_BANK_FILE):
+        return []
+    with open(SCIENCE_BANK_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f).get('problems', [])
+
+
+def _sample_from_science_bank(grade, science_fields, count=5):
+    """各章から1問ずつcount問をランダムに選ぶ"""
+    bank = _load_science_bank()
+    if not bank:
+        return []
+    grade_filtered = [q for q in bank if q.get('grade') == grade] or bank
+    valid = [
+        q for q in grade_filtered
+        if _has_choices(q.get('question', ''))
+        and q.get('answer', '').strip().lower() in ['a', 'b', 'c', 'd', 'e']
+    ]
+    # 有効な問題がある章だけ絞り込み、ランダムにcount章選ぶ
+    available_fields = [f for f in science_fields if any(f in q.get('field', '') for q in valid)]
+    selected_fields = random.sample(available_fields, min(count, len(available_fields)))
+    selected = []
+    used_ids = set()
+    for field in selected_fields:
+        candidates = [q for q in valid if field in q.get('field', '') and q.get('id') not in used_ids]
+        if candidates:
+            picked = random.choice(candidates)
+            selected.append(picked)
+            used_ids.add(picked['id'])
+    return selected
+
+
 def generate_daily_questions(subjects_today, settings):
     grade = settings['grade']
     difficulty = DIFFICULTY_MAP.get(settings['difficulty'], settings['difficulty'])
     math_fields = settings['math_fields'].get(grade, settings['math_fields']['中学1年'])
+    science_fields = settings.get('science_fields', {}).get(grade, [])
 
     all_questions = []
     for subject in SUBJECT_ORDER:
@@ -138,6 +172,10 @@ def generate_daily_questions(subjects_today, settings):
                 if not questions:
                     logger.info('バンク空のためLLM生成にフォールバック')
                     questions = _generate_math(count, grade, difficulty, math_fields)
+            elif subject == '理科' and science_fields:
+                questions = _sample_from_science_bank(grade, science_fields, count)
+                if not questions:
+                    questions = _generate_subject(subject, count, grade, difficulty)
             else:
                 questions = _generate_subject(subject, count, grade, difficulty)
             for q in questions:
