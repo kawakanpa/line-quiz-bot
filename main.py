@@ -95,11 +95,18 @@ def cron():
     save_today_data(questions)
     message = format_question_message(questions, weekday)
 
+    parent_user_id = settings.get('parent_user_id')
     with ApiClient(configuration) as api_client:
-        MessagingApi(api_client).push_message(PushMessageRequest(
+        api = MessagingApi(api_client)
+        api.push_message(PushMessageRequest(
             to=son_user_id,
             messages=[TextMessage(text=message)]
         ))
+        if parent_user_id:
+            api.push_message(PushMessageRequest(
+                to=parent_user_id,
+                messages=[TextMessage(text=f'【本日の問題を送信しました】\n\n{message}')]
+            ))
 
     logger.info(f'問題送信完了: {len(questions)}問')
     return jsonify({'status': 'ok', 'questions': len(questions)})
