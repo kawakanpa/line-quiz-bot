@@ -139,17 +139,22 @@ def _sample_from_science_bank(grade, science_fields, count=5):
         if _has_choices(q.get('question', ''))
         and q.get('answer', '').strip().lower() in ['a', 'b', 'c', 'd', 'e']
     ]
-    # 有効な問題がある章だけ絞り込み、ランダムにcount章選ぶ
-    available_fields = [f for f in science_fields if any(f in q.get('field', '') for q in valid)]
-    selected_fields = random.sample(available_fields, min(count, len(available_fields)))
+    # 各章から1問ずつ抽出
     selected = []
     used_ids = set()
-    for field in selected_fields:
+    for field in science_fields:
         candidates = [q for q in valid if field in q.get('field', '') and q.get('id') not in used_ids]
         if candidates:
             picked = random.choice(candidates)
             selected.append(picked)
             used_ids.add(picked['id'])
+    # 足りない分をランダム補充
+    remaining = [q for q in valid if q.get('id') not in used_ids]
+    while len(selected) < count and remaining:
+        picked = random.choice(remaining)
+        selected.append(picked)
+        used_ids.add(picked['id'])
+        remaining = [q for q in remaining if q.get('id') not in used_ids]
     return selected
 
 
