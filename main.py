@@ -50,9 +50,9 @@ def save_today_data(questions):
         'date': datetime.now().strftime('%Y-%m-%d'),
         'questions': questions,
         'answered': False,
-        'math_retry_questions': None,
-        'math_retry_round': 0,
-        'math_mission_complete': False
+        'retry_questions': None,
+        'retry_round': 0,
+        'mission_complete': False
     }
     with open(TODAY_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -118,11 +118,22 @@ def reset():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
+    import hmac as _hmac, hashlib, base64
+    body_bytes = request.get_data()
+    body = body_bytes.decode('utf-8')
     signature = request.headers.get('X-Line-Signature', '')
-    body = request.get_data(as_text=True)
+    secret = CHANNEL_SECRET or ''
+    computed = base64.b64encode(
+        _hmac.new(secret.encode('utf-8'), body_bytes, hashlib.sha256).digest()
+    ).decode()
+    logger.info(f'Webhook受信: body={len(body_bytes)}bytes')
+    logger.info(f'署名受信:  {signature}')
+    logger.info(f'署名計算:  {computed}')
+    logger.info(f'一致: {signature == computed}')
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
+        logger.warning('署名検証失敗')
         abort(400)
     return 'OK'
 
@@ -198,17 +209,17 @@ def _handle_son(text, settings, api, reply_token):
         _reply(api, reply_token, '今日の問題はまだ来てないよ！12時になったら届くから待ってね。')
         return
 
-    retry_questions = today_data.get('math_retry_questions')
+    retry_questions = today_data.get('retry_questions')
 
     # ── 再挑戦モード ──────────────────────────────────
     if retry_questions is not None:
         answers = _parse_answers(text)
         if len(answers) != len(retry_questions):
             _reply(api, reply_token,
-                   f'再挑戦問題は{len(retry_questions)}問だよ。{len(retry_questions)}個の答えをカンマ区切りで送ってね。\n例：a,b,c')
+                   f'再挑戦問題は{len(retry_questions)}問だよ。{len(retry_questions)}個の答えをカンマ区切りで送ってね。\n例：a,b,c,d,e')
             return
 
-        round_num = today_data.get('math_retry_round', 1)
+        round_num = today_data.get('retry_round', 1)
         result_msg, explanation_msg, parent_msg, wrong_questions = grade_retry(retry_questions, answers)
 
         _reply(api, reply_token, result_msg)
@@ -219,19 +230,19 @@ def _handle_son(text, settings, api, reply_token):
 
         if wrong_questions:
             new_retry = generate_retry_questions(wrong_questions, settings)
-            today_data['math_retry_questions'] = new_retry
-            today_data['math_retry_round'] = round_num + 1
+            today_data['retry_questions'] = new_retry
+            today_data['retry_round'] = round_num + 1
             update_today_data(today_data)
             api.push_message(PushMessageRequest(
                 to=settings['son_user_id'],
                 messages=[TextMessage(text=format_retry_message(new_retry, round_num + 1))]))
         else:
-            today_data['math_retry_questions'] = None
-            today_data['math_mission_complete'] = True
+            today_data['retry_questions'] = None
+            today_data['mission_complete'] = True
             update_today_data(today_data)
             api.push_message(PushMessageRequest(
                 to=settings['son_user_id'],
-                messages=[TextMessage(text='Mission Complete！\n数学全問正解おめでとう！')]))
+                messages=[TextMessage(text='Mission Complete！\n全問正解おめでとう！')]))
         return
 
     # ── 初回回答モード ────────────────────────────────
@@ -244,26 +255,20 @@ def _handle_son(text, settings, api, reply_token):
 
     if len(answers) != len(questions):
         _reply(api, reply_token,
-               f'問題数は{len(questions)}問だよ。{len(questions)}個の答えをカンマ区切りで送ってね。\n例：a,b,c,a,b...')
+               f'問題数は{len(questions)}問だよ。{len(questions)}個の答えをカンマ区切りで送ってね。\n例：a,b,c,d,e,a,b...')
         return
 
-    result_msg, explanation_msg, parent_msg = grade_and_format(questions, answers)
+    result_msg, explanation_msg, parent_msg, wrong_questions = grade_and_format(questions, answers)
     today_data['answered'] = True
 
-    # 間違えた数学問題を特定
-    math_questions = [q for q in questions if q['subject'] == '数学']
-    math_answers = [answers[i] for i, q in enumerate(questions) if q['subject'] == '数学']
-    wrong_math = [q for q, a in zip(math_questions, math_answers)
-                  if a.strip().upper() != q['answer'].strip().upper()]
-
-    if wrong_math:
-        new_retry = generate_retry_questions(wrong_math, settings)
-        today_data['math_retry_questions'] = new_retry
-        today_data['math_retry_round'] = 1
-        today_data['math_mission_complete'] = False
+    if wrong_questions:
+        new_retry = generate_retry_questions(wrong_questions, settings)
+        today_data['retry_questions'] = new_retry
+        today_data['retry_round'] = 1
+        today_data['mission_complete'] = False
     else:
-        today_data['math_retry_questions'] = None
-        today_data['math_mission_complete'] = True
+        today_data['retry_questions'] = None
+        today_data['mission_complete'] = True
 
     update_today_data(today_data)
 
@@ -271,14 +276,14 @@ def _handle_son(text, settings, api, reply_token):
     api.push_message(PushMessageRequest(
         to=settings['son_user_id'], messages=[TextMessage(text=explanation_msg)]))
 
-    if wrong_math:
+    if wrong_questions:
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'],
-            messages=[TextMessage(text=format_retry_message(today_data['math_retry_questions'], 1))]))
+            messages=[TextMessage(text=format_retry_message(today_data['retry_questions'], 1))]))
     else:
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'],
-            messages=[TextMessage(text='Mission Complete！\n数学全問正解おめでとう！')]))
+            messages=[TextMessage(text='Mission Complete！\n全問正解おめでとう！')]))
 
     api.push_message(PushMessageRequest(
         to=settings['parent_user_id'], messages=[TextMessage(text=parent_msg)]))
@@ -288,8 +293,8 @@ def _parse_answers(text):
     """1a 2b 3c / 1.a,2.b / a,b,c 形式（全角・半角混在）に対応"""
     # 全角→半角変換
     text = text.translate(str.maketrans(
-        '０１２３４５６７８９ａｂｃＡＢＣ，．：　',
-        '0123456789abcABC,.: '
+        '０１２３４５６７８９ａｂｃｄｅＡＢＣＤＥ，．：　',
+        '0123456789abcdeABCDE,.: '
     ))
     text = text.replace('、', ',').replace('，', ',')
     # スペース区切りをカンマに統一
@@ -297,7 +302,7 @@ def _parse_answers(text):
     parts = [p.strip() for p in text.split(',') if p.strip()]
     answers = []
     for p in parts:
-        m = re.match(r'^\d+[.)）\s]*([a-cA-C○✗×])', p) or re.match(r'^\d+([a-cA-C])', p)
+        m = re.match(r'^\d+[.)）\s]*([a-eA-E○✗×])', p) or re.match(r'^\d+([a-eA-E])', p)
         if m:
             answers.append(m.group(1))
         else:

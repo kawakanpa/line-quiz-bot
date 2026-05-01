@@ -2,6 +2,7 @@ import os
 import json
 import random
 import logging
+import time
 from datetime import datetime
 from groq import Groq
 from dotenv import load_dotenv
@@ -15,13 +16,103 @@ client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
 MODEL = 'llama-3.3-70b-versatile'
 
 SUBJECT_ORDER = ['数学', '国語', '社会', '理科', '英語']
+MATH_BANK_FILE = 'math_problems.json'
+MATH_PAGE_BANK_FILE = 'math_page_bank.json'
 
-THREE_CHOICE_INSTRUCTION = """
-問題形式：全問3択問題（A/B/Cの3択）
+FIVE_CHOICE_INSTRUCTION = """
+問題形式：全問5択問題（a/b/c/d/eの5択）
 - 図・グラフ・絵が必要な問題は絶対に作らないこと
 - 文章だけで完結する問題にすること
-- 選択肢はa. ～  b. ～  c. ～ の形式で問題文に含めること
+- 選択肢はa. ～  b. ～  c. ～  d. ～  e. ～ の形式で問題文に含めること
 """
+
+
+def _load_math_bank():
+    if not os.path.exists(MATH_BANK_FILE):
+        return []
+    with open(MATH_BANK_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f).get('problems', [])
+
+
+def _has_choices(question_text):
+    return 'a. ' in question_text or '\na.' in question_text
+
+
+def _sample_from_bank(grade, math_fields):
+    """全章から1問ずつランダムに抽出する（選択肢あり問題のみ）"""
+    bank = _load_math_bank()
+    if not bank:
+        return []
+    grade_filtered = [q for q in bank if q.get('grade') == grade] or bank
+    selected = []
+    used_ids = set()
+    for field in math_fields:
+        candidates = [
+            q for q in grade_filtered
+            if field in q.get('field', '')
+            and q.get('id') not in used_ids
+            and _has_choices(q.get('question', ''))
+            and q.get('answer', '').strip().lower() in ['a', 'b', 'c', 'd', 'e']
+        ]
+        if candidates:
+            picked = random.choice(candidates)
+            selected.append(picked)
+            used_ids.add(picked['id'])
+    return selected
+
+
+def _generate_math_from_page_bank(grade, math_fields, difficulty):
+    """ページバンクから各章1問ずつGroqで生成"""
+    if not os.path.exists(MATH_PAGE_BANK_FILE):
+        return []
+    with open(MATH_PAGE_BANK_FILE, 'r', encoding='utf-8') as f:
+        bank = json.load(f)
+    grade_bank = bank.get(grade, {})
+    if not grade_bank:
+        return []
+
+    questions = []
+    for field in math_fields:
+        field_pages = grade_bank.get(field, {})
+        if not field_pages:
+            continue
+        page_num, page_text = random.choice(list(field_pages.items()))
+        prompt = f"""以下は中学数学の問題集（{grade}・{field}）のp.{page_num}のテキストです。
+このページから「類題」または練習問題を1問選び、5択問題に変換してください。
+
+テキスト：
+{page_text[:2000]}
+
+ルール：
+- 具体的な場面・状況を設定した文章問題にする（式だけの問題は文章に変換する）
+- 正解1つ＋数学的に紛らわしい誤答4つを生成する
+- 難易度：{difficulty}
+
+JSON形式のみで返してください：
+{{
+  "questions": [
+    {{
+      "subject": "数学",
+      "grade": "{grade}",
+      "field": "{field}",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
+      "type": "multiple_choice",
+      "answer": "a か b か c か d か e",
+      "explanation": "解き方（2-3文、計算過程を含む）"
+    }}
+  ]
+}}"""
+        try:
+            result = _call_groq(prompt)
+            if result:
+                result[0].setdefault('subject', '数学')
+                result[0]['type'] = 'multiple_choice'
+                questions.append(result[0])
+                logger.info(f'{field}: ページバンクから1問生成')
+        except Exception as e:
+            logger.error(f'{field}のページバンク生成エラー: {e}')
+        time.sleep(4)  # レート制限対策
+    return questions
 
 
 def generate_daily_questions(subjects_today, settings):
@@ -36,7 +127,12 @@ def generate_daily_questions(subjects_today, settings):
         count = subjects_today[subject]
         try:
             if subject == '数学':
-                questions = _generate_math(count, grade, difficulty, math_fields)
+                questions = _sample_from_bank(grade, math_fields)
+                if not questions:
+                    questions = _generate_math_from_page_bank(grade, math_fields, difficulty)
+                if not questions:
+                    logger.info('バンク空のためLLM生成にフォールバック')
+                    questions = _generate_math(count, grade, difficulty, math_fields)
             else:
                 questions = _generate_subject(subject, count, grade, difficulty)
             for q in questions:
@@ -61,7 +157,7 @@ def _generate_math(count, grade, difficulty, math_fields):
 各分野から指定数の問題を作成：
 {fields_str}
 
-{THREE_CHOICE_INSTRUCTION}
+{FIVE_CHOICE_INSTRUCTION}
 
 以下のJSON形式のみで返してください（他の文章不要）：
 {{
@@ -69,15 +165,16 @@ def _generate_math(count, grade, difficulty, math_fields):
     {{
       "subject": "数学",
       "field": "分野名",
-      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
       "type": "multiple_choice",
-      "answer": "a か b か c",
+      "answer": "a か b か c か d か e",
       "explanation": "解き方（2文程度、計算過程を含む）"
     }}
   ]
 }}
 
 難易度：{difficulty}
+全問、具体的な場面や状況を設定した文章問題にすること。単純な計算問題（「3x+5=11のxを求めよ」のような式だけの問題）は作らないこと。
 問題文は「〜はいくらか」「〜を求めよ」「〜はどれか」のように簡潔に終わること。「どうなるでしょうか」などの冗長な表現は使わないこと。
 全{count}問を必ず含めること。"""
 
@@ -95,7 +192,7 @@ def _generate_subject(subject, count, grade, difficulty):
     prompt = f"""あなたは中学{subject}の教師です。{grade}の{subject}問題を{count}問作成してください。
 分野の参考：{guidance.get(subject, '')}
 
-{THREE_CHOICE_INSTRUCTION}
+{FIVE_CHOICE_INSTRUCTION}
 
 以下のJSON形式のみで返してください（他の文章不要）：
 {{
@@ -103,9 +200,9 @@ def _generate_subject(subject, count, grade, difficulty):
     {{
       "subject": "{subject}",
       "field": "分野名",
-      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
       "type": "multiple_choice",
-      "answer": "a か b か c",
+      "answer": "a か b か c か d か e",
       "explanation": "解説（なぜその答えか、2-3文）"
     }}
   ]
@@ -119,12 +216,29 @@ def _generate_subject(subject, count, grade, difficulty):
 
 
 def generate_retry_questions(wrong_questions, settings):
-    """間違えた数学問題を数字を変えて再出題"""
+    """間違えた問題を教科別に再出題"""
     grade = settings['grade']
     difficulty = DIFFICULTY_MAP.get(settings['difficulty'], settings['difficulty'])
     retry_questions = []
     for q in wrong_questions:
-        prompt = f"""あなたは中学数学の教師です。
+        subject = q.get('subject', '数学')
+        try:
+            if subject == '数学':
+                prompt = _make_math_retry_prompt(q, grade, difficulty)
+            else:
+                prompt = _make_subject_retry_prompt(q, subject, grade, difficulty)
+            questions = _call_groq(prompt)
+            if questions:
+                questions[0].setdefault('subject', subject)
+                questions[0]['type'] = 'multiple_choice'
+                retry_questions.append(questions[0])
+        except Exception as e:
+            logger.error(f'再出題生成エラー ({subject}): {e}')
+    return retry_questions
+
+
+def _make_math_retry_prompt(q, grade, difficulty):
+    return f"""あなたは中学数学の教師です。
 以下の問題と全く同じ解き方・同じ分野の問題を、数字だけ変えて1問作成してください。
 
 元の問題: {q['question']}
@@ -133,7 +247,7 @@ def generate_retry_questions(wrong_questions, settings):
 
 問題形式：3択（a/b/c）
 選択肢はa. ～  b. ～  c. ～ の形式で問題文に含めること
-図・グラフ不要の文章問題のみ
+図・グラフ不要の文章問題のみ（具体的な場面・状況を設定すること。式だけの計算問題は不可）
 問題文は簡潔に（「〜はどれか」など）
 
 以下のJSON形式のみで返してください：
@@ -142,32 +256,59 @@ def generate_retry_questions(wrong_questions, settings):
     {{
       "subject": "数学",
       "field": "{q['field']}",
-      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
       "type": "multiple_choice",
-      "answer": "a か b か c",
+      "answer": "a か b か c か d か e",
       "explanation": "解き方（2文程度、計算過程を含む）"
     }}
   ]
 }}"""
-        try:
-            questions = _call_groq(prompt)
-            if questions:
-                questions[0].setdefault('subject', '数学')
-                questions[0]['type'] = 'multiple_choice'
-                retry_questions.append(questions[0])
-        except Exception as e:
-            logger.error(f'再出題生成エラー: {e}')
-    return retry_questions
+
+
+def _make_subject_retry_prompt(q, subject, grade, difficulty):
+    guidance = {
+        '国語': 'ことわざ・慣用句、文法、漢字、文学作品など',
+        '英語': '英検4級レベル（単語・熟語、基本文法、短文穴埋めなど）',
+        '社会': '歴史・地理・公民（中学範囲）',
+        '理科': '計算問題を中心に出題（オームの法則・速さ・密度・圧力・化学計算など）',
+    }
+    diff_str = '難易度：英検4級レベル' if subject == '英語' else f'難易度：{difficulty}、学年：{grade}'
+    return f"""あなたは中学{subject}の教師です。
+以下の問題と同じ分野・同じ形式で、内容を変えた問題を1問作成してください。
+
+元の問題: {q['question']}
+分野: {q['field']}
+{diff_str}
+参考：{guidance.get(subject, '')}
+
+問題形式：3択（a/b/c）
+選択肢はa. ～  b. ～  c. ～ の形式で問題文に含めること
+図・グラフ不要の文章問題のみ
+問題文は簡潔に（「〜はどれか」「〜を選べ」など）
+
+以下のJSON形式のみで返してください：
+{{
+  "questions": [
+    {{
+      "subject": "{subject}",
+      "field": "{q['field']}",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
+      "type": "multiple_choice",
+      "answer": "a か b か c か d か e",
+      "explanation": "解説（2-3文）"
+    }}
+  ]
+}}"""
 
 
 def format_retry_message(questions, round_num):
     """再挑戦問題のメッセージ"""
-    lines = [f'【数学 再挑戦 第{round_num}回】', '']
+    lines = [f'【再挑戦 第{round_num}回】', '']
     for i, q in enumerate(questions, 1):
-        lines.append(f'{i}. [{q["field"]}] {q["question"]}')
+        lines.append(f'{i}. [{q["subject"]}・{q["field"]}] {q["question"]}')
         lines.append('')
     lines.append('答えを番号付きカンマ区切りで送ってね')
-    lines.append(f'例：1.a,2.b,3.c...')
+    lines.append(f'例：1.a,2.b,3.c,4.d...')
     return '\n'.join(lines)
 
 
@@ -274,11 +415,14 @@ def _is_correct(submitted, expected, question_type):
 def grade_and_format(questions, answers):
     results = []
     correct = 0
+    wrong_questions = []
 
     for i, (q, a) in enumerate(zip(questions, answers)):
         ok = _is_correct(a, q['answer'], q['type'])
         if ok:
             correct += 1
+        else:
+            wrong_questions.append(q)
         results.append({'num': i + 1, 'q': q, 'submitted': a, 'ok': ok})
 
     total = len(questions)
@@ -318,4 +462,4 @@ def grade_and_format(questions, answers):
         lines.append('')
     parent_msg = '\n'.join(lines)
 
-    return result_msg, explanation_msg, parent_msg
+    return result_msg, explanation_msg, parent_msg, wrong_questions

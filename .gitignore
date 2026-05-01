@@ -1,5 +1,6 @@
 .env
 settings.json
 today_questions.json
+math_problems.json
 __pycache__/
 *.pyc

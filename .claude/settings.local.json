@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m py_compile quiz.py)",
+      "Bash(python -m py_compile main.py)",
+      "Bash(pip show *)",
+      "Bash(python -m py_compile extract_problems.py)"
+    ]
+  }
+}
