@@ -125,18 +125,8 @@ def reset():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    import hmac as _hmac, hashlib, base64
-    body_bytes = request.get_data()
-    body = body_bytes.decode('utf-8')
+    body = request.get_data(as_text=True)
     signature = request.headers.get('X-Line-Signature', '')
-    secret = CHANNEL_SECRET or ''
-    computed = base64.b64encode(
-        _hmac.new(secret.encode('utf-8'), body_bytes, hashlib.sha256).digest()
-    ).decode()
-    logger.info(f'Webhook受信: body={len(body_bytes)}bytes')
-    logger.info(f'署名受信:  {signature}')
-    logger.info(f'署名計算:  {computed}')
-    logger.info(f'一致: {signature == computed}')
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
