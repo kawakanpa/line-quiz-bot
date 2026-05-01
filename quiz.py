@@ -38,26 +38,31 @@ def _has_choices(question_text):
     return 'a. ' in question_text or '\na.' in question_text
 
 
-def _sample_from_bank(grade, math_fields):
-    """全章から1問ずつランダムに抽出する（選択肢あり問題のみ）"""
+def _sample_from_bank(grade, math_fields, count=10):
+    """各章から1問ずつ抽出し、足りない分をランダム補充して合計count問にする"""
     bank = _load_math_bank()
     if not bank:
         return []
     grade_filtered = [q for q in bank if q.get('grade') == grade] or bank
+    valid = [
+        q for q in grade_filtered
+        if _has_choices(q.get('question', ''))
+        and q.get('answer', '').strip().lower() in ['a', 'b', 'c', 'd', 'e']
+    ]
     selected = []
     used_ids = set()
     for field in math_fields:
-        candidates = [
-            q for q in grade_filtered
-            if field in q.get('field', '')
-            and q.get('id') not in used_ids
-            and _has_choices(q.get('question', ''))
-            and q.get('answer', '').strip().lower() in ['a', 'b', 'c', 'd', 'e']
-        ]
+        candidates = [q for q in valid if field in q.get('field', '') and q.get('id') not in used_ids]
         if candidates:
             picked = random.choice(candidates)
             selected.append(picked)
             used_ids.add(picked['id'])
+    remaining = [q for q in valid if q.get('id') not in used_ids]
+    while len(selected) < count and remaining:
+        picked = random.choice(remaining)
+        selected.append(picked)
+        used_ids.add(picked['id'])
+        remaining = [q for q in remaining if q.get('id') not in used_ids]
     return selected
 
 
@@ -127,7 +132,7 @@ def generate_daily_questions(subjects_today, settings):
         count = subjects_today[subject]
         try:
             if subject == '数学':
-                questions = _sample_from_bank(grade, math_fields)
+                questions = _sample_from_bank(grade, math_fields, count)
                 if not questions:
                     questions = _generate_math_from_page_bank(grade, math_fields, difficulty)
                 if not questions:
