@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from groq import Groq
 from dotenv import load_dotenv
-from config import DIFFICULTY_MAP
+from config import DIFFICULTY_MAP, save_settings
 
 load_dotenv()
 
@@ -20,6 +20,9 @@ MATH_BANK_FILE = 'math_problems.json'
 MATH_PAGE_BANK_FILE = 'math_page_bank.json'
 SCIENCE_BANK_FILE = 'science_problems.json'
 SOCIAL_BANK_FILE = 'social_problems.json'
+KOKUGO_BANK_FILE = 'kokugo_problems.json'
+
+KOKUGO_READING_FIELDS = {'論説・評論文', '小説・戯曲', '随筆', '古典物語・随筆', '漢文・漢詩'}
 
 FIVE_CHOICE_INSTRUCTION = """
 問題形式：全問5択問題（a/b/c/d/eの5択）
@@ -290,6 +293,35 @@ def _sample_from_social_bank(grade_ranges, count, checkpoint_count):
     return selected
 
 
+def _load_kokugo_bank():
+    if not os.path.exists(KOKUGO_BANK_FILE):
+        return []
+    with open(KOKUGO_BANK_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f).get('problems', [])
+
+
+def _sample_from_kokugo_bank(use_reading):
+    """読解系1問(use_reading=True) か 非読解系10問(False) をバンクから抽出"""
+    bank = _load_kokugo_bank()
+    if not bank:
+        return []
+    valid = [
+        q for q in bank
+        if _has_choices(q.get('question', ''))
+        and q.get('answer', '').strip().lower() in ['a', 'b', 'c', 'd', 'e']
+    ]
+    reading = [q for q in valid if q.get('field') in KOKUGO_READING_FIELDS]
+    non_reading = [q for q in valid if q.get('field') not in KOKUGO_READING_FIELDS]
+
+    if use_reading and reading:
+        return [random.choice(reading)]
+    elif non_reading:
+        return random.sample(non_reading, min(10, len(non_reading)))
+    elif reading:
+        return [random.choice(reading)]
+    return []
+
+
 def generate_daily_questions(subjects_today, settings):
     grade = settings['grade']
     difficulty = DIFFICULTY_MAP.get(settings['difficulty'], settings['difficulty'])
@@ -317,6 +349,14 @@ def generate_daily_questions(subjects_today, settings):
                 grade_ranges, social_count, cp_count = _get_social_schedule(grade, datetime.now())
                 questions = _sample_from_social_bank(grade_ranges, social_count, cp_count)
                 if not questions:
+                    questions = _generate_subject(subject, count, grade, difficulty)
+            elif subject == '国語':
+                use_reading = settings.get('kokugo_next_type', 'reading') == 'reading'
+                questions = _sample_from_kokugo_bank(use_reading)
+                if questions:
+                    settings['kokugo_next_type'] = 'non_reading' if use_reading else 'reading'
+                    save_settings(settings)
+                else:
                     questions = _generate_subject(subject, count, grade, difficulty)
             else:
                 questions = _generate_subject(subject, count, grade, difficulty)

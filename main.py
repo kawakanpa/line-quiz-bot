@@ -202,6 +202,13 @@ def _handle_parent(text, settings, api, reply_token):
                 return
             save_today_data(questions)
             today_data = get_today_data()
+        else:
+            # 回答状態をリセットして再挑戦できるようにする
+            today_data['answered'] = False
+            today_data['retry_questions'] = None
+            today_data['retry_round'] = 0
+            today_data['mission_complete'] = False
+            update_today_data(today_data)
         questions = today_data['questions']
         weekday = WEEKDAY_MAP[datetime.now().weekday()]
         message = format_question_message(questions, weekday)
