@@ -14,7 +14,8 @@ from linebot.v3.exceptions import InvalidSignatureError
 from dotenv import load_dotenv
 from config import load_settings, save_settings
 from quiz import (generate_daily_questions, format_question_message, grade_and_format,
-                  generate_retry_questions, format_retry_message, grade_retry)
+                  generate_retry_questions, format_retry_message, grade_retry,
+                  generate_question_from_page)
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -182,6 +183,18 @@ def _handle_parent(text, settings, api, reply_token):
 
     if text == 'ヘルプ':
         _reply(api, reply_token, HELP_MSG)
+        return
+
+    if text.startswith('プレビュー:'):
+        page = text.split(':', 1)[1].strip()
+        _reply(api, reply_token, '問題を生成中です。少々お待ちください...')
+        msg, err = generate_question_from_page(page)
+        if err:
+            api.push_message(PushMessageRequest(
+                to=settings['parent_user_id'], messages=[TextMessage(text=f'エラー：{err}')]))
+        else:
+            api.push_message(PushMessageRequest(
+                to=settings['parent_user_id'], messages=[TextMessage(text=msg)]))
         return
 
     if ':' in text:

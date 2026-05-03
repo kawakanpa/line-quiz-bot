@@ -126,6 +126,65 @@ JSON形式のみで返してください：
     return questions
 
 
+def generate_question_from_page(page_num_str):
+    """指定ページからGroqで問題を1問生成して返す（親プレビュー用）"""
+    if not os.path.exists(MATH_PAGE_BANK_FILE):
+        return None, 'ページバンクファイルが見つかりません'
+    with open(MATH_PAGE_BANK_FILE, 'r', encoding='utf-8') as f:
+        bank = json.load(f)
+
+    # 全学年・全分野からページ番号を検索
+    found_text = None
+    found_field = None
+    found_grade = None
+    for grade, fields in bank.items():
+        for field, pages in fields.items():
+            if page_num_str in pages:
+                found_text = pages[page_num_str]
+                found_field = field
+                found_grade = grade
+                break
+        if found_text:
+            break
+
+    if not found_text:
+        return None, f'p.{page_num_str} はページバンクに登録されていません'
+
+    prompt = f"""以下は中学数学の問題集（{found_grade}・{found_field}）のp.{page_num_str}のテキストです。
+このページから「類題」または練習問題を1問選び、5択問題に変換してください。
+
+テキスト：
+{found_text[:2000]}
+
+ルール：
+- 具体的な場面・状況を設定した文章問題にする（式だけの問題は文章に変換する）
+- 正解1つ＋数学的に紛らわしい誤答4つを生成する
+- 「$」「$$」「\(」「\)」などのLaTeX記号は絶対に使わないこと
+- 分数はスラッシュで表記（例：（2x－3）／3）、累乗は「x²」「x³」で表記
+
+JSON形式のみで返してください：
+{{
+  "questions": [
+    {{
+      "subject": "数学",
+      "grade": "{found_grade}",
+      "field": "{found_field}",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
+      "type": "multiple_choice",
+      "answer": "a か b か c か d か e",
+      "explanation": "解き方（2-3文、計算過程を含む）"
+    }}
+  ]
+}}"""
+
+    result = _call_groq(prompt)
+    if not result:
+        return None, '問題生成に失敗しました'
+    q = result[0]
+    msg = f'【プレビュー p.{page_num_str}・{found_field}】\n\n{q["question"]}\n\n正解：{q["answer"]}\n解説：{q["explanation"]}'
+    return msg, None
+
+
 def _load_science_bank():
     if not os.path.exists(SCIENCE_BANK_FILE):
         return []
