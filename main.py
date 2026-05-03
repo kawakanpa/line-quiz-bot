@@ -344,6 +344,8 @@ def _parse_answers(text):
         '0123456789abcdeABCDE,.: '
     ))
     text = text.replace('、', ',').replace('，', ',')
+    # "1. a" や "1) a" のスペースを詰めて "1.a" に変換
+    text = re.sub(r'(\d+[.)）])\s+([a-eA-E])', r'\1\2', text)
     # スペース区切りをカンマに統一
     text = re.sub(r'[\s,]+', ',', text.strip())
     parts = [p.strip() for p in text.split(',') if p.strip()]
