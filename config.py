@@ -14,6 +14,7 @@ DIFFICULTY_MAP = {
 DEFAULT_SETTINGS = {
     "son_user_id": "",
     "parent_user_id": "",
+    "parent2_user_id": "",
     "send_time": "12:00",
     "grade": "中学1年",
     "difficulty": "応用",
@@ -54,6 +55,8 @@ def load_settings():
         settings['son_user_id'] = os.environ['SON_USER_ID']
     if os.environ.get('PARENT_USER_ID'):
         settings['parent_user_id'] = os.environ['PARENT_USER_ID']
+    if os.environ.get('PARENT2_USER_ID'):
+        settings['parent2_user_id'] = os.environ['PARENT2_USER_ID']
 
     return settings
 

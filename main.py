@@ -63,6 +63,15 @@ def update_today_data(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def _push_to_parents(api, settings, text):
+    """登録済みの全親アカウントにpush送信する"""
+    for key in ('parent_user_id', 'parent2_user_id'):
+        uid = settings.get(key)
+        if uid:
+            api.push_message(PushMessageRequest(
+                to=uid, messages=[TextMessage(text=text)]))
+
+
 # ── エンドポイント ────────────────────────────────────
 
 @app.route('/')
@@ -95,18 +104,13 @@ def cron():
     save_today_data(questions)
     message = format_question_message(questions, weekday)
 
-    parent_user_id = settings.get('parent_user_id')
     with ApiClient(configuration) as api_client:
         api = MessagingApi(api_client)
         api.push_message(PushMessageRequest(
             to=son_user_id,
             messages=[TextMessage(text=message)]
         ))
-        if parent_user_id:
-            api.push_message(PushMessageRequest(
-                to=parent_user_id,
-                messages=[TextMessage(text=f'【本日の問題を送信しました】\n\n{message}')]
-            ))
+        _push_to_parents(api, settings, f'【本日の問題を送信しました】\n\n{message}')
 
     logger.info(f'問題送信完了: {len(questions)}問')
     return jsonify({'status': 'ok', 'questions': len(questions)})
@@ -143,20 +147,22 @@ def handle_message(event):
     user_id = event.source.user_id
     text = event.message.text.strip()
     parent_id = settings.get('parent_user_id')
+    parent2_id = settings.get('parent2_user_id')
     son_id = settings.get('son_user_id')
-    logger.info(f'受信: user_id={user_id}, parent_id={parent_id}, son_id={son_id}, text={text}')
+    is_parent = user_id in (parent_id, parent2_id) and user_id != ''
+    logger.info(f'受信: user_id={user_id}, parent_id={parent_id}, parent2_id={parent2_id}, son_id={son_id}, text={text}')
 
     with ApiClient(configuration) as api_client:
         api = MessagingApi(api_client)
 
         # 息子の初回登録
-        if not son_id and user_id != parent_id:
+        if not son_id and not is_parent:
             settings['son_user_id'] = user_id
             save_settings(settings)
             _reply(api, event.reply_token, '登録完了！毎日12時に問題を送るよ。頑張ってね！')
             return
 
-        if user_id == parent_id:
+        if is_parent:
             logger.info('親として処理')
             _handle_parent(text, settings, api, event.reply_token)
         elif user_id == son_id:
@@ -222,8 +228,7 @@ def _handle_son(text, settings, api, reply_token):
         _reply(api, reply_token, result_msg)
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'], messages=[TextMessage(text=explanation_msg)]))
-        api.push_message(PushMessageRequest(
-            to=settings['parent_user_id'], messages=[TextMessage(text=parent_msg)]))
+        _push_to_parents(api, settings, parent_msg)
 
         if wrong_questions:
             new_retry = generate_retry_questions(wrong_questions, settings)
@@ -282,8 +287,7 @@ def _handle_son(text, settings, api, reply_token):
             to=settings['son_user_id'],
             messages=[TextMessage(text='Mission Complete！\n全問正解おめでとう！')]))
 
-    api.push_message(PushMessageRequest(
-        to=settings['parent_user_id'], messages=[TextMessage(text=parent_msg)]))
+    _push_to_parents(api, settings, parent_msg)
 
 
 def _parse_answers(text):
