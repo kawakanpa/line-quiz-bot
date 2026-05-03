@@ -19,6 +19,7 @@ SUBJECT_ORDER = ['数学', '国語', '社会', '理科', '英語']
 MATH_BANK_FILE = 'math_problems.json'
 MATH_PAGE_BANK_FILE = 'math_page_bank.json'
 SCIENCE_BANK_FILE = 'science_problems.json'
+SOCIAL_BANK_FILE = 'social_problems.json'
 
 FIVE_CHOICE_INSTRUCTION = """
 問題形式：全問5択問題（a/b/c/d/eの5択）
@@ -222,6 +223,73 @@ def _sample_from_science_bank(grade, science_fields, count=5):
     return selected
 
 
+def _load_social_bank():
+    if not os.path.exists(SOCIAL_BANK_FILE):
+        return []
+    with open(SOCIAL_BANK_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f).get('problems', [])
+
+
+def _get_social_schedule(grade, today):
+    """学年・月から社会の出題grade_range・問題数・チェックポイント数を返す"""
+    month = today.month
+    if grade == "中学1年":
+        return ["1年"], 30, 5
+    elif grade == "中学2年":
+        if 4 <= month <= 5:
+            return ["2年1学期前半"], 30, 5
+        elif 6 <= month <= 8:
+            return ["2年1学期後半"], 30, 5
+        elif 9 <= month <= 12:
+            return ["2年2学期"], 30, 5
+        else:
+            return ["2年3学期"], 30, 5
+    elif grade == "中学3年":
+        if 4 <= month <= 8:
+            return ["3年1学期"], 50, 5
+        elif 9 <= month <= 12:
+            return ["3年2学期", "3年2学期後半"], 50, 10
+        else:
+            return ["3年3学期"], 50, 5
+    return ["1年"], 30, 5
+
+
+def _sample_from_social_bank(grade_ranges, count, checkpoint_count):
+    """社会バンクからgrade_rangeでフィルターしてcount問サンプリング"""
+    bank = _load_social_bank()
+    if not bank:
+        return []
+    filtered = [q for q in bank if q.get('grade_range') in grade_ranges]
+    if not filtered:
+        filtered = bank
+    valid = [
+        q for q in filtered
+        if _has_choices(q.get('question', ''))
+        and q.get('answer', '').strip().lower() in ['a', 'b', 'c', 'd', 'e']
+    ]
+    if not valid:
+        return []
+    checkpoint_q = [q for q in valid if q.get('is_checkpoint')]
+    regular_q = [q for q in valid if not q.get('is_checkpoint')]
+    selected = []
+    if checkpoint_q:
+        n_cp = min(checkpoint_count, len(checkpoint_q))
+        selected.extend(random.sample(checkpoint_q, n_cp))
+    remaining = count - len(selected)
+    used_ids = {q.get('id') for q in selected}
+    avail = [q for q in regular_q if q.get('id') not in used_ids]
+    if len(avail) >= remaining:
+        selected.extend(random.sample(avail, remaining))
+    else:
+        selected.extend(avail)
+        still = count - len(selected)
+        extra = [q for q in checkpoint_q if q.get('id') not in {s.get('id') for s in selected}]
+        if extra and still > 0:
+            selected.extend(random.sample(extra, min(still, len(extra))))
+    random.shuffle(selected)
+    return selected
+
+
 def generate_daily_questions(subjects_today, settings):
     grade = settings['grade']
     difficulty = DIFFICULTY_MAP.get(settings['difficulty'], settings['difficulty'])
@@ -243,6 +311,11 @@ def generate_daily_questions(subjects_today, settings):
                     questions = _generate_math(count, grade, difficulty, math_fields)
             elif subject == '理科' and science_fields:
                 questions = _sample_from_science_bank(grade, science_fields, count)
+                if not questions:
+                    questions = _generate_subject(subject, count, grade, difficulty)
+            elif subject == '社会':
+                grade_ranges, social_count, cp_count = _get_social_schedule(grade, datetime.now())
+                questions = _sample_from_social_bank(grade_ranges, social_count, cp_count)
                 if not questions:
                     questions = _generate_subject(subject, count, grade, difficulty)
             else:

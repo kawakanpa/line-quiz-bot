@@ -1,15 +1,15 @@
 """
 PDFページを画像化してGroq視覚モデルで問題を抽出し、math_problems.jsonに保存する。
+各分野が終わるたびに自動保存。途中クラッシュしても進捗が消えない。
 使い方:
-  python extract_problems.py                        # 全章処理
-  python extract_problems.py --field 正の数・負の数  # 特定章のみ
+  python extract_problems.py                        # 全章処理（既存データを上書き）
   python extract_problems.py --append               # 既存データに追記
+  python extract_problems.py --field 正の数・負の数  # 特定章のみ
 """
 import os
 import json
 import time
 import base64
-import random
 import logging
 import argparse
 import fitz  # PyMuPDF
@@ -26,7 +26,6 @@ VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
 PDF_PATH = r'C:\Users\kawak\OneDrive\Desktop\claude作業用\ゆうちゃん自由自在\数学（自由自在）.pdf'
 OUTPUT_FILE = 'math_problems.json'
 DPI = 150
-PAGES_PER_FIELD = 15  # 各章から何ページサンプリングするか
 
 CHAPTER_MAP = {
     "中学1年": {
@@ -38,7 +37,23 @@ CHAPTER_MAP = {
         "平面図形":       (305, 339),
         "空間図形":       (340, 369),
         "データの活用":   (478, 499),
-    }
+    },
+    "中学2年": {
+        "式の計算":           (88, 111),
+        "連立方程式":         (182, 205),
+        "一次関数":           (254, 285),
+        "図形の調べ方":       (370, 393),
+        "図形の性質と証明":   (394, 425),
+        "データの分布":       (500, 522),
+    },
+    "中学3年": {
+        "多項式":       (112, 131),
+        "平方根":       (132, 148),
+        "二次方程式":   (206, 228),
+        "関数y=ax²":   (286, 304),
+        "相似な図形":   (426, 459),
+        "円":           (460, 476),
+    },
 }
 
 
@@ -56,6 +71,8 @@ def extract_question_from_image(img_b64, grade, field):
 - グラフ・図が必要な問題は数値・条件を文章に置き換える
 - 正解1つ＋数学的に紛らわしい誤答4つを生成する
 - 自分で解いて正解を必ず確認すること
+- 「$」「$$」「\(」「\)」などのLaTeX記号は絶対に使わないこと
+- 分数はスラッシュで表記（例：（2x－3）／3）、累乗は「x²」「x³」で表記
 - 「類題」が見つからない場合は練習問題でも可
 - 問題が全くない場合は questions を空リストにする
 
@@ -99,26 +116,29 @@ def save(problems, output_file):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--field', help='特定の章のみ処理（例: 正の数・負の数）')
+    parser.add_argument('--grade', action='append', help='処理する学年（複数指定可）例: --grade 中学2年')
     parser.add_argument('--append', action='store_true', help='既存データに追記')
     args = parser.parse_args()
 
     all_questions = load_existing(OUTPUT_FILE) if args.append else []
+    logger.info(f'開始時点のストック: {len(all_questions)}問')
 
     with fitz.open(PDF_PATH) as pdf:
         total_pages = len(pdf)
         logger.info(f'PDF読み込み完了: {total_pages}ページ')
 
         for grade, fields in CHAPTER_MAP.items():
+            if args.grade and grade not in args.grade:
+                continue
             for field, (start, end) in fields.items():
                 if args.field and args.field != field:
                     continue
 
                 page_nums = list(range(start, min(end + 1, total_pages + 1)))
-                sampled = sorted(random.sample(page_nums, min(PAGES_PER_FIELD, len(page_nums))))
-                logger.info(f'{grade} {field}: {len(sampled)}ページ処理開始')
+                logger.info(f'{grade} {field}: {len(page_nums)}ページ処理開始')
 
                 field_count = 0
-                for page_num in sampled:
+                for page_num in page_nums:
                     logger.info(f'  p.{page_num} 処理中...')
                     img_b64 = page_to_base64(pdf, page_num)
                     questions = extract_question_from_image(img_b64, grade, field)
@@ -130,12 +150,13 @@ def main():
                     else:
                         logger.info(f'  → 問題なし（スキップ）')
 
-                    time.sleep(3)  # レート制限対策
+                    time.sleep(3)
 
-                logger.info(f'{field} 完了: {field_count}問')
+                # 分野ごとに保存
+                save(all_questions, OUTPUT_FILE)
+                logger.info(f'{grade} {field} 完了・保存: {field_count}問（合計{len(all_questions)}問）')
 
-    save(all_questions, OUTPUT_FILE)
-    logger.info(f'保存完了: 合計{len(all_questions)}問 → {OUTPUT_FILE}')
+    logger.info(f'全処理完了: 合計{len(all_questions)}問 → {OUTPUT_FILE}')
 
 
 if __name__ == '__main__':

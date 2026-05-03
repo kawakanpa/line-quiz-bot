@@ -185,6 +185,31 @@ def _handle_parent(text, settings, api, reply_token):
         _reply(api, reply_token, HELP_MSG)
         return
 
+    if text == '再送信':
+        today_data = get_today_data()
+        if not today_data:
+            # ファイルが消えている場合は再生成
+            weekday = WEEKDAY_MAP[datetime.now().weekday()]
+            subjects_today = settings['schedule'].get(weekday, {})
+            if not subjects_today:
+                _reply(api, reply_token, '今日は問題なし設定です')
+                return
+            _reply(api, reply_token, '問題を再生成中です。少々お待ちください...')
+            questions = generate_daily_questions(subjects_today, settings)
+            if not questions:
+                api.push_message(PushMessageRequest(
+                    to=settings['parent_user_id'], messages=[TextMessage(text='問題の再生成に失敗しました')]))
+                return
+            save_today_data(questions)
+            today_data = get_today_data()
+        questions = today_data['questions']
+        weekday = WEEKDAY_MAP[datetime.now().weekday()]
+        message = format_question_message(questions, weekday)
+        api.push_message(PushMessageRequest(
+            to=settings['son_user_id'], messages=[TextMessage(text=message)]))
+        _reply(api, reply_token, f'今日の問題を再送信しました（{len(questions)}問）')
+        return
+
     if text.startswith('プレビュー:'):
         page = text.split(':', 1)[1].strip()
         _reply(api, reply_token, '問題を生成中です。少々お待ちください...')
@@ -348,6 +373,7 @@ def _format_settings(settings):
 
 HELP_MSG = """【設定コマンド一覧】
 設定 → 現在の設定を表示
+再送信 → 今日の問題をゆうに再送信
 
 学年:中学2年 → 学年を変更
   （中学1年／中学2年／中学3年）
