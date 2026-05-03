@@ -116,20 +116,6 @@ def cron():
     return jsonify({'status': 'ok', 'questions': len(questions)})
 
 
-@app.route('/test_parent2')
-def test_parent2():
-    if request.args.get('token') != CRON_SECRET:
-        abort(403)
-    settings = load_settings()
-    parent2_id = settings.get('parent2_user_id')
-    if not parent2_id:
-        return jsonify({'status': 'error', 'message': 'PARENT2_USER_IDが未設定'}), 400
-    with ApiClient(configuration) as api_client:
-        api = MessagingApi(api_client)
-        api.push_message(PushMessageRequest(
-            to=parent2_id, messages=[TextMessage(text='【テスト】2台目への送信確認です')]))
-    return jsonify({'status': 'ok', 'message': f'送信先: {parent2_id}'})
-
 
 @app.route('/reset')
 def reset():
