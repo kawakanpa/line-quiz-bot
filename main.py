@@ -207,7 +207,7 @@ def _handle_parent(text, settings, api, reply_token):
         message = format_question_message(questions, weekday)
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'], messages=[TextMessage(text=message)]))
-        _reply(api, reply_token, f'今日の問題を再送信しました（{len(questions)}問）')
+        _push_to_parents(api, settings, f'今日の問題を再送信しました（{len(questions)}問）')
         return
 
     if text.startswith('プレビュー:'):
