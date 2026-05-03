@@ -323,7 +323,6 @@ def _format_settings(settings):
     lines = [
         '【現在の設定】',
         f'学年：{settings["grade"]}',
-        f'難易度：{settings["difficulty"]}',
         f'送信時刻：{settings["send_time"]}',
         '',
         '【曜日別スケジュール】',
