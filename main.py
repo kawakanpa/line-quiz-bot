@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import re
+import threading
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from linebot.v3 import WebhookHandler
@@ -71,6 +72,35 @@ def _push_to_parents(api, settings, text):
         if uid:
             api.push_message(PushMessageRequest(
                 to=uid, messages=[TextMessage(text=text)]))
+
+
+def _generate_retry_in_background(wrong_questions, settings):
+    """バックグラウンドで再挑戦問題を生成し、完成したらpush送信"""
+    try:
+        new_retry = generate_retry_questions(wrong_questions, settings)
+    except Exception as e:
+        logger.error(f'再挑戦生成エラー: {e}')
+        new_retry = []
+
+    with ApiClient(configuration) as api_client:
+        api = MessagingApi(api_client)
+        try:
+            if new_retry:
+                today_data = get_today_data()
+                if today_data:
+                    today_data['retry_questions'] = new_retry
+                    today_data['retry_round'] = 1
+                    today_data['mission_complete'] = False
+                    update_today_data(today_data)
+                api.push_message(PushMessageRequest(
+                    to=settings['son_user_id'],
+                    messages=[TextMessage(text=format_retry_message(new_retry, 1))]))
+            else:
+                api.push_message(PushMessageRequest(
+                    to=settings['son_user_id'],
+                    messages=[TextMessage(text='再挑戦問題の生成に失敗しました。今日はおしまい！')]))
+        except Exception as e:
+            logger.error(f'再挑戦push送信エラー: {e}')
 
 
 # ── エンドポイント ────────────────────────────────────
@@ -316,28 +346,16 @@ def _handle_son(text, settings, api, reply_token):
         to=settings['son_user_id'], messages=[TextMessage(text=explanation_msg)]))
     _push_to_parents(api, settings, parent_msg)
 
-    # 再挑戦問題の生成は時間がかかるので最後に
+    # 再挑戦問題の生成は時間がかかるのでバックグラウンドで実行
     if wrong_questions:
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'],
             messages=[TextMessage(text='再挑戦問題を生成中...少し待ってね')]))
-        try:
-            new_retry = generate_retry_questions(wrong_questions, settings)
-        except Exception as e:
-            logger.error(f'再挑戦生成エラー: {e}')
-            new_retry = []
-        if new_retry:
-            today_data['retry_questions'] = new_retry
-            today_data['retry_round'] = 1
-            today_data['mission_complete'] = False
-            update_today_data(today_data)
-            api.push_message(PushMessageRequest(
-                to=settings['son_user_id'],
-                messages=[TextMessage(text=format_retry_message(new_retry, 1))]))
-        else:
-            api.push_message(PushMessageRequest(
-                to=settings['son_user_id'],
-                messages=[TextMessage(text='再挑戦問題の生成に失敗しました。今日はおしまい！')]))
+        threading.Thread(
+            target=_generate_retry_in_background,
+            args=(wrong_questions, settings),
+            daemon=False
+        ).start()
     else:
         today_data['retry_questions'] = None
         today_data['mission_complete'] = True
