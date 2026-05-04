@@ -318,14 +318,26 @@ def _handle_son(text, settings, api, reply_token):
 
     # 再挑戦問題の生成は時間がかかるので最後に
     if wrong_questions:
-        new_retry = generate_retry_questions(wrong_questions, settings)
-        today_data['retry_questions'] = new_retry
-        today_data['retry_round'] = 1
-        today_data['mission_complete'] = False
-        update_today_data(today_data)
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'],
-            messages=[TextMessage(text=format_retry_message(new_retry, 1))]))
+            messages=[TextMessage(text='再挑戦問題を生成中...少し待ってね')]))
+        try:
+            new_retry = generate_retry_questions(wrong_questions, settings)
+        except Exception as e:
+            logger.error(f'再挑戦生成エラー: {e}')
+            new_retry = []
+        if new_retry:
+            today_data['retry_questions'] = new_retry
+            today_data['retry_round'] = 1
+            today_data['mission_complete'] = False
+            update_today_data(today_data)
+            api.push_message(PushMessageRequest(
+                to=settings['son_user_id'],
+                messages=[TextMessage(text=format_retry_message(new_retry, 1))]))
+        else:
+            api.push_message(PushMessageRequest(
+                to=settings['son_user_id'],
+                messages=[TextMessage(text='再挑戦問題の生成に失敗しました。今日はおしまい！')]))
     else:
         today_data['retry_questions'] = None
         today_data['mission_complete'] = True

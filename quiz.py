@@ -440,12 +440,17 @@ def _generate_subject(subject, count, grade, difficulty):
     return _call_groq(prompt)
 
 
+MAX_RETRY_QUESTIONS = 10
+
+
 def generate_retry_questions(wrong_questions, settings):
-    """間違えた問題を教科別に再出題"""
+    """間違えた問題を教科別に再出題（最大MAX_RETRY_QUESTIONS問）"""
     grade = settings['grade']
     difficulty = DIFFICULTY_MAP.get(settings['difficulty'], settings['difficulty'])
+    # 多すぎる場合は先頭MAX_RETRY_QUESTIONS問に制限（レート制限・タイムアウト対策）
+    targets = wrong_questions[:MAX_RETRY_QUESTIONS]
     retry_questions = []
-    for q in wrong_questions:
+    for q in targets:
         subject = q.get('subject', '数学')
         try:
             if subject == '数学':
@@ -459,6 +464,7 @@ def generate_retry_questions(wrong_questions, settings):
                 retry_questions.append(questions[0])
         except Exception as e:
             logger.error(f'再出題生成エラー ({subject}): {e}')
+    logger.info(f'再挑戦問題: {len(retry_questions)}/{len(targets)}問生成成功')
     return retry_questions
 
 
