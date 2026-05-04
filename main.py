@@ -308,32 +308,31 @@ def _handle_son(text, settings, api, reply_token):
 
     result_msg, explanation_msg, parent_msg, wrong_questions = grade_and_format(questions, answers)
     today_data['answered'] = True
+    update_today_data(today_data)
 
+    # 採点結果を即座に返信（reply_tokenの有効期限切れ防止）
+    _reply(api, reply_token, result_msg)
+    api.push_message(PushMessageRequest(
+        to=settings['son_user_id'], messages=[TextMessage(text=explanation_msg)]))
+    _push_to_parents(api, settings, parent_msg)
+
+    # 再挑戦問題の生成は時間がかかるので最後に
     if wrong_questions:
         new_retry = generate_retry_questions(wrong_questions, settings)
         today_data['retry_questions'] = new_retry
         today_data['retry_round'] = 1
         today_data['mission_complete'] = False
+        update_today_data(today_data)
+        api.push_message(PushMessageRequest(
+            to=settings['son_user_id'],
+            messages=[TextMessage(text=format_retry_message(new_retry, 1))]))
     else:
         today_data['retry_questions'] = None
         today_data['mission_complete'] = True
-
-    update_today_data(today_data)
-
-    _reply(api, reply_token, result_msg)
-    api.push_message(PushMessageRequest(
-        to=settings['son_user_id'], messages=[TextMessage(text=explanation_msg)]))
-
-    if wrong_questions:
-        api.push_message(PushMessageRequest(
-            to=settings['son_user_id'],
-            messages=[TextMessage(text=format_retry_message(today_data['retry_questions'], 1))]))
-    else:
+        update_today_data(today_data)
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'],
             messages=[TextMessage(text='Mission Complete！\n全問正解おめでとう！')]))
-
-    _push_to_parents(api, settings, parent_msg)
 
 
 def _parse_answers(text):
