@@ -450,8 +450,14 @@ def generate_retry_questions(wrong_questions, settings):
     # 多すぎる場合は先頭MAX_RETRY_QUESTIONS問に制限（レート制限・タイムアウト対策）
     targets = wrong_questions[:MAX_RETRY_QUESTIONS]
     retry_questions = []
-    for q in targets:
+    for i, q in enumerate(targets):
         subject = q.get('subject', '数学')
+        # 国語の長文問題はそのまま同じ問題を再出題（生成しない）
+        if subject == '国語' and q.get('field') in KOKUGO_READING_FIELDS:
+            retry_q = dict(q)
+            retry_q['type'] = 'multiple_choice'
+            retry_questions.append(retry_q)
+            continue
         try:
             if subject == '数学':
                 prompt = _make_math_retry_prompt(q, grade, difficulty)
@@ -464,6 +470,9 @@ def generate_retry_questions(wrong_questions, settings):
                 retry_questions.append(questions[0])
         except Exception as e:
             logger.error(f'再出題生成エラー ({subject}): {e}')
+        # Groqレート制限対策（30 RPM = 2秒間隔）
+        if i < len(targets) - 1:
+            time.sleep(2.5)
     logger.info(f'再挑戦問題: {len(retry_questions)}/{len(targets)}問生成成功')
     return retry_questions
 
