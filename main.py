@@ -344,19 +344,16 @@ def _parse_answers(text):
         '0123456789abcdeABCDE,.: '
     ))
     text = text.replace('、', ',').replace('，', ',')
-    # "1. a" や "1) a" のスペースを詰めて "1.a" に変換
-    text = re.sub(r'(\d+[.)）])\s+([a-eA-E])', r'\1\2', text)
-    # スペース区切りをカンマに統一
+
+    # 番号付き形式が含まれていれば、番号に紐づいたa-eだけを抽出（余分な文字は無視）
+    numbered = re.findall(r'\d+\s*[.)）]?\s*([a-eA-E])', text)
+    if numbered:
+        return numbered
+
+    # 番号なし形式：a,b,c,d,e
     text = re.sub(r'[\s,]+', ',', text.strip())
     parts = [p.strip() for p in text.split(',') if p.strip()]
-    answers = []
-    for p in parts:
-        m = re.match(r'^\d+[.)）\s]*([a-eA-E○✗×])', p) or re.match(r'^\d+([a-eA-E])', p)
-        if m:
-            answers.append(m.group(1))
-        else:
-            answers.append(p)
-    return answers
+    return parts
 
 
 def _reply(api, reply_token, text):
