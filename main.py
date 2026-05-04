@@ -350,7 +350,7 @@ def _handle_son(text, settings, api, reply_token):
     if wrong_questions:
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'],
-            messages=[TextMessage(text='再挑戦問題を生成中...少し待ってね')]))
+            messages=[TextMessage(text='再挑戦問題を生成中...最大2分ほどお待ちください')]))
         threading.Thread(
             target=_generate_retry_in_background,
             args=(wrong_questions, settings),
