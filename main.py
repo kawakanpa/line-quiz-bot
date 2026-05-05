@@ -301,8 +301,9 @@ def _handle_parent(text, settings, api, reply_token):
         _reply(api, reply_token, HELP_MSG)
         return
 
-    if text.startswith('明日だけ'):
+    if text.replace('　', ' ').startswith('明日だけ'):
         from datetime import timedelta
+        text = text.replace('　', ' ')  # 全角スペースを半角に統一
         subjects, hour = _parse_tomorrow_override(text)
         if not subjects:
             _reply(api, reply_token, '科目と問題数が読み取れませんでした。\n例：明日だけ 10時 数学5問 英語3問')
