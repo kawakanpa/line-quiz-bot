@@ -614,8 +614,11 @@ def _clean_latex(text):
     """LaTeXコマンドや$記号をLINEで読める形に変換する"""
     if not isinstance(text, str):
         return text
-    # \frac{a}{b} → (a/b)
-    text = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1/\2)', text)
+    # \frac{a}{b} → (a/b)（1段ネストまで対応）
+    brace = r'\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}'
+    text = re.sub(r'\\[dt]?frac\s*' + brace + r'\s*' + brace, r'(\1/\2)', text)
+    # マッチしなかった \frac を除去
+    text = re.sub(r'\\[dt]?frac\b', '', text)
     # \sqrt{x} → √x
     text = re.sub(r'\\sqrt\{([^}]*)\}', r'√\1', text)
     # \mathrm{x}, \text{x}, \mathbf{x}, \mathit{x} など → 中身だけ残す
