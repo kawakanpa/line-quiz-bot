@@ -550,7 +550,7 @@ def format_retry_message(questions, round_num):
     """再挑戦問題のメッセージ"""
     lines = [f'【再挑戦 第{round_num}回】', '']
     for i, q in enumerate(questions, 1):
-        lines.append(f'{i}. [{q["subject"]}・{q["field"]}] {q["question"]}')
+        lines.append(f'{i}. [{q["subject"]}・{q["field"]}] {_clean_latex(q["question"])}')
         lines.append('')
     lines.append('答えを番号付きカンマ区切りで送ってね')
     lines.append(f'例：1.a,2.b,3.c,4.d...')
@@ -699,7 +699,7 @@ def format_question_message(questions, weekday):
         lines.append('')
         for q in grouped[subject]:
             n += 1
-            lines.append(f'{n}. [{q["field"]}] {q["question"]}')
+            lines.append(f'{n}. [{q["field"]}] {_clean_latex(q["question"])}')
             lines.append('')
 
     lines.append('答えを番号付きカンマ区切りで送ってね')
