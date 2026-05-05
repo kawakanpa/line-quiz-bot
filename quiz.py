@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import random
 import logging
 import time
@@ -71,7 +72,7 @@ def _sample_from_bank(grade, math_fields, count=10):
         selected.append(picked)
         used_ids.add(picked['id'])
         remaining = [q for q in remaining if q.get('id') not in used_ids]
-    return selected
+    return _clean_questions(selected)
 
 
 def _generate_math_from_page_bank(grade, math_fields, difficulty):
@@ -223,7 +224,7 @@ def _sample_from_science_bank(grade, science_fields, count=5):
         selected.append(picked)
         used_ids.add(picked['id'])
         remaining = [q for q in remaining if q.get('id') not in used_ids]
-    return selected
+    return _clean_questions(selected)
 
 
 def _load_social_bank():
@@ -290,7 +291,7 @@ def _sample_from_social_bank(grade_ranges, count, checkpoint_count):
         if extra and still > 0:
             selected.extend(random.sample(extra, min(still, len(extra))))
     random.shuffle(selected)
-    return selected
+    return _clean_questions(selected)
 
 
 def _load_kokugo_bank():
@@ -314,11 +315,11 @@ def _sample_from_kokugo_bank(use_reading):
     non_reading = [q for q in valid if q.get('field') not in KOKUGO_READING_FIELDS]
 
     if use_reading and reading:
-        return [random.choice(reading)]
+        return _clean_questions([random.choice(reading)])
     elif non_reading:
-        return random.sample(non_reading, min(10, len(non_reading)))
+        return _clean_questions(random.sample(non_reading, min(10, len(non_reading))))
     elif reading:
-        return [random.choice(reading)]
+        return _clean_questions([random.choice(reading)])
     return []
 
 
@@ -440,7 +441,7 @@ def _generate_subject(subject, count, grade, difficulty):
     return _call_groq(prompt)
 
 
-MAX_RETRY_QUESTIONS = 10
+MAX_RETRY_QUESTIONS = 30
 
 
 def generate_retry_questions(wrong_questions, settings):
@@ -609,6 +610,55 @@ def grade_retry(questions, answers):
     return result_msg, explanation_msg, parent_msg, wrong_questions
 
 
+def _clean_latex(text):
+    """LaTeXコマンドや$記号をLINEで読める形に変換する"""
+    if not isinstance(text, str):
+        return text
+    # \frac{a}{b} → (a/b)
+    text = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'(\1/\2)', text)
+    # \sqrt{x} → √x
+    text = re.sub(r'\\sqrt\{([^}]*)\}', r'√\1', text)
+    # \mathrm{x}, \text{x}, \mathbf{x}, \mathit{x} など → 中身だけ残す
+    text = re.sub(r'\\(?:mathrm|text|mathbf|mathit|mathnormal|mathsf|mathtt|mathcal|mathbb)\{([^}]*)\}', r'\1', text)
+    # ^{2} → ², ^{3} → ³ など上付き文字
+    sup_map = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+               '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', 'n': 'ⁿ'}
+    def replace_sup(m):
+        inner = m.group(1)
+        return ''.join(sup_map.get(c, c) for c in inner)
+    text = re.sub(r'\^\{([^}]*)\}', replace_sup, text)
+    text = re.sub(r'\^(\d)', lambda m: sup_map.get(m.group(1), m.group(1)), text)
+    # _{n} → そのまま削除（下付き文字はLINEで表示不可）
+    text = re.sub(r'_\{([^}]*)\}', r'\1', text)
+    # 残ったLaTeXコマンド (\times など) を読める記号に
+    latex_symbols = {
+        r'\times': '×', r'\div': '÷', r'\cdot': '·',
+        r'\leq': '≦', r'\geq': '≧', r'\neq': '≠',
+        r'\pm': '±', r'\infty': '∞', r'\pi': 'π',
+        r'\alpha': 'α', r'\beta': 'β', r'\theta': 'θ',
+        r'\rightarrow': '→', r'\leftarrow': '←',
+    }
+    for cmd, sym in latex_symbols.items():
+        text = text.replace(cmd, sym)
+    # $...$ や $$...$$ のデリミタを除去
+    text = re.sub(r'\$\$(.+?)\$\$', r'\1', text, flags=re.DOTALL)
+    text = re.sub(r'\$(.+?)\$', r'\1', text)
+    # 残った単体の $ を除去（スペースとして使われているケースも含む）
+    text = text.replace('$', '')
+    # \( \) \[ \] の除去
+    text = re.sub(r'\\\(|\\\)|\\\[|\\\]', '', text)
+    return text
+
+
+def _clean_questions(questions):
+    """問題リストの全テキストフィールドからLaTeXを除去する"""
+    for q in questions:
+        for field in ('question', 'explanation'):
+            if field in q:
+                q[field] = _clean_latex(q[field])
+    return questions
+
+
 def _call_groq(prompt):
     response = client.chat.completions.create(
         model=MODEL,
@@ -618,7 +668,7 @@ def _call_groq(prompt):
         max_tokens=3000
     )
     data = json.loads(response.choices[0].message.content)
-    return data.get('questions', [])
+    return _clean_questions(data.get('questions', []))
 
 
 def format_question_message(questions, weekday):
