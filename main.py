@@ -169,8 +169,31 @@ def cron():
         logger.warning('息子のuser_idが未設定')
         return jsonify({'status': 'error', 'message': 'son_user_id not set'}), 400
 
-    weekday = WEEKDAY_MAP[datetime.now().weekday()]
-    subjects_today = settings['schedule'].get(weekday, {})
+    now = datetime.now()
+    today_str = now.strftime('%Y-%m-%d')
+    current_hour = now.hour
+    weekday = WEEKDAY_MAP[now.weekday()]
+
+    # 今日の配信が既に済んでいればスキップ
+    if get_today_data():
+        return jsonify({'status': 'skipped', 'message': '本日分は配信済み'})
+
+    # 明日だけ設定の確認
+    override = settings.get('tomorrow_override')
+    if override and override.get('date') == today_str:
+        scheduled_hour = override.get('hour', 12)
+        if current_hour != scheduled_hour:
+            return jsonify({'status': 'skipped', 'message': f'配信予定時刻は{scheduled_hour}時'})
+        subjects_today = override['subjects']
+        del settings['tomorrow_override']
+        save_settings(settings)
+        logger.info(f'明日だけ設定を適用: {subjects_today}')
+    else:
+        # 通常スケジュール：正午のみ配信
+        if current_hour != 12:
+            return jsonify({'status': 'skipped', 'message': '配信時刻外'})
+        subjects_today = settings['schedule'].get(weekday, {})
+
     if not subjects_today:
         return jsonify({'status': 'skipped', 'message': f'{weekday}曜日は問題なし'})
 
@@ -251,6 +274,22 @@ def handle_message(event):
             logger.warning(f'未登録ユーザー: {user_id}')
 
 
+def _parse_tomorrow_override(text):
+    """「明日だけ 10時 数学5問 英語3問」から時刻と{科目: 問題数}を抽出する"""
+    SUBJECTS = ['数学', '国語', '社会', '理科', '英語']
+    subjects = {}
+    for subject in SUBJECTS:
+        m = re.search(subject + r'\D{0,3}?(\d+)', text)
+        if m:
+            subjects[subject] = int(m.group(1))
+    # 時刻抽出：「10時」「10:00」「午前10時」など
+    hour = None
+    m = re.search(r'(\d{1,2})\s*時', text)
+    if m:
+        hour = int(m.group(1))
+    return subjects, hour
+
+
 def _handle_parent(text, settings, api, reply_token):
     text = text.replace('：', ':')
 
@@ -260,6 +299,30 @@ def _handle_parent(text, settings, api, reply_token):
 
     if text == 'ヘルプ':
         _reply(api, reply_token, HELP_MSG)
+        return
+
+    if text.startswith('明日だけ'):
+        from datetime import timedelta
+        subjects, hour = _parse_tomorrow_override(text)
+        if not subjects:
+            _reply(api, reply_token, '科目と問題数が読み取れませんでした。\n例：明日だけ 10時 数学5問 英語3問')
+            return
+        tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+        delivery_hour = hour if hour is not None else 12
+        settings['tomorrow_override'] = {
+            'date': tomorrow,
+            'subjects': subjects,
+            'hour': delivery_hour
+        }
+        save_settings(settings)
+        # 親への確認通知
+        lines = [f'明日は{delivery_hour}時に、']
+        lines.append('、'.join([f'{s}{n}問' for s, n in subjects.items()]))
+        lines.append('が配信されます。')
+        lines.append('（基本スケジュールは変更していません）')
+        notify = '\n'.join(lines)
+        _push_to_parents(api, settings, notify)
+        _reply(api, reply_token, '設定しました！\n' + notify)
         return
 
     if text == '再送信':
