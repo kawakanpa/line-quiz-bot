@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import threading
+import urllib.request
 from datetime import datetime
 from flask import Flask, request, abort, jsonify
 from linebot.v3 import WebhookHandler
@@ -34,14 +35,58 @@ configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 TODAY_FILE = 'today_questions.json'
 WEEKDAY_MAP = {0: '月', 1: '火', 2: '水', 3: '木', 4: '金', 5: '土', 6: '日'}
 
+GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
+GIST_ID = os.environ.get('GIST_ID')
+GIST_FILENAME = 'today_questions.json'
+
+
+def _gist_get():
+    """GistからJSONを読み込む"""
+    if not GITHUB_TOKEN or not GIST_ID:
+        return None
+    try:
+        req = urllib.request.Request(
+            f'https://api.github.com/gists/{GIST_ID}',
+            headers={'Authorization': f'token {GITHUB_TOKEN}', 'Accept': 'application/json'}
+        )
+        with urllib.request.urlopen(req) as res:
+            data = json.loads(res.read())
+        content = data['files'][GIST_FILENAME]['content']
+        return json.loads(content)
+    except Exception as e:
+        logger.error(f'Gist読み込みエラー: {e}')
+        return None
+
+
+def _gist_save(data):
+    """GistにJSONを書き込む"""
+    if not GITHUB_TOKEN or not GIST_ID:
+        return
+    try:
+        payload = json.dumps({
+            'files': {GIST_FILENAME: {'content': json.dumps(data, ensure_ascii=False, indent=2)}}
+        }).encode()
+        req = urllib.request.Request(
+            f'https://api.github.com/gists/{GIST_ID}',
+            data=payload,
+            method='PATCH',
+            headers={'Authorization': f'token {GITHUB_TOKEN}', 'Content-Type': 'application/json'}
+        )
+        urllib.request.urlopen(req)
+    except Exception as e:
+        logger.error(f'Gist書き込みエラー: {e}')
+
 
 # ── 今日の問題ファイル操作 ────────────────────────────
 
 def get_today_data():
-    if not os.path.exists(TODAY_FILE):
+    # まずGistから読む、失敗したらローカルファイル
+    data = _gist_get()
+    if data is None and os.path.exists(TODAY_FILE):
+        with open(TODAY_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    if not data:
         return None
-    with open(TODAY_FILE, 'r', encoding='utf-8') as f:
-        data = json.load(f)
     if data.get('date') != datetime.now().strftime('%Y-%m-%d'):
         return None
     return data
@@ -56,11 +101,13 @@ def save_today_data(questions):
         'retry_round': 0,
         'mission_complete': False
     }
+    _gist_save(data)
     with open(TODAY_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def update_today_data(data):
+    _gist_save(data)
     with open(TODAY_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
