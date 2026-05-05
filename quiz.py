@@ -647,6 +647,11 @@ def _clean_latex(text):
     text = text.replace('$', '')
     # \( \) \[ \] の除去
     text = re.sub(r'\\\(|\\\)|\\\[|\\\]', '', text)
+    # \, \; \: \! \quad \qquad などスペース系コマンドを除去
+    text = re.sub(r'\\[,;:!]', '', text)
+    text = re.sub(r'\\q?quad\b', ' ', text)
+    # 残った \英字+ 形式のコマンドを除去（引数なし）
+    text = re.sub(r'\\[a-zA-Z]+\b', '', text)
     return text
 
 
