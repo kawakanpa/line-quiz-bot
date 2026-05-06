@@ -303,6 +303,18 @@ def _handle_parent(text, settings, api, reply_token):
         _reply(api, reply_token, HELP_MSG)
         return
 
+    if text == '親確認':
+        today_data = get_today_data()
+        if not today_data:
+            _reply(api, reply_token, '今日の問題データがありません')
+            return
+        questions = today_data['questions']
+        weekday = WEEKDAY_MAP[datetime.now(JST).weekday()]
+        message = format_question_message(questions, weekday)
+        _push_to_parents(api, settings, f'【本日の問題（親確認用）】\n\n{message}')
+        _reply(api, reply_token, '親アカウントに送信しました')
+        return
+
     if text.replace('　', ' ').startswith('明日だけ'):
         from datetime import timedelta
         text = text.replace('　', ' ')  # 全角スペースを半角に統一
