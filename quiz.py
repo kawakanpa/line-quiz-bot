@@ -4,7 +4,9 @@ import re
 import random
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+JST = timezone(timedelta(hours=9))
 from groq import Groq
 from dotenv import load_dotenv
 from config import DIFFICULTY_MAP, save_settings
@@ -347,7 +349,7 @@ def generate_daily_questions(subjects_today, settings):
                 if not questions:
                     questions = _generate_subject(subject, count, grade, difficulty)
             elif subject == '社会':
-                grade_ranges, social_count, cp_count = _get_social_schedule(grade, datetime.now())
+                grade_ranges, social_count, cp_count = _get_social_schedule(grade, datetime.now(JST))
                 questions = _sample_from_social_bank(grade_ranges, social_count, cp_count)
                 if not questions:
                     questions = _generate_subject(subject, count, grade, difficulty)
@@ -592,7 +594,7 @@ def grade_retry(questions, answers):
     explanation_msg = '\n'.join(lines)
 
     # Parent: レポート
-    today = datetime.now()
+    today = datetime.now(JST)
     lines = [
         f'【ゆうの再挑戦】{today.month}月{today.day}日',
         f'正解率：{correct}/{total}',
@@ -682,7 +684,7 @@ def _call_groq(prompt):
 
 
 def format_question_message(questions, weekday):
-    today = datetime.now()
+    today = datetime.now(JST)
     date_str = f'{today.year}年{today.month}月{today.day}日({weekday})'
 
     grouped = {}
@@ -751,7 +753,7 @@ def grade_and_format(questions, answers):
     explanation_msg = '\n'.join(lines)
 
     # Parent: レポート
-    today = datetime.now()
+    today = datetime.now(JST)
     lines = [
         f'【ゆうの回答】{today.month}月{today.day}日',
         f'正解率：{correct}/{total}（{pct}%）',

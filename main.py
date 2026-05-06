@@ -4,7 +4,9 @@ import logging
 import re
 import threading
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+JST = timezone(timedelta(hours=9))
 from flask import Flask, request, abort, jsonify
 from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import (
@@ -87,14 +89,14 @@ def get_today_data():
             data = json.load(f)
     if not data:
         return None
-    if data.get('date') != datetime.now().strftime('%Y-%m-%d'):
+    if data.get('date') != datetime.now(JST).strftime('%Y-%m-%d'):
         return None
     return data
 
 
 def save_today_data(questions):
     data = {
-        'date': datetime.now().strftime('%Y-%m-%d'),
+        'date': datetime.now(JST).strftime('%Y-%m-%d'),
         'questions': questions,
         'answered': False,
         'retry_questions': None,
@@ -169,7 +171,7 @@ def cron():
         logger.warning('息子のuser_idが未設定')
         return jsonify({'status': 'error', 'message': 'son_user_id not set'}), 400
 
-    now = datetime.now()
+    now = datetime.now(JST)
     today_str = now.strftime('%Y-%m-%d')
     current_hour = now.hour
     weekday = WEEKDAY_MAP[now.weekday()]
@@ -308,7 +310,7 @@ def _handle_parent(text, settings, api, reply_token):
         if not subjects:
             _reply(api, reply_token, '科目と問題数が読み取れませんでした。\n例：明日だけ 10時 数学5問 英語3問')
             return
-        tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+        tomorrow = (datetime.now(JST) + timedelta(days=1)).strftime('%Y-%m-%d')
         delivery_hour = hour if hour is not None else 12
         settings['tomorrow_override'] = {
             'date': tomorrow,
@@ -330,7 +332,7 @@ def _handle_parent(text, settings, api, reply_token):
         today_data = get_today_data()
         if not today_data:
             # ファイルが消えている場合は再生成
-            weekday = WEEKDAY_MAP[datetime.now().weekday()]
+            weekday = WEEKDAY_MAP[datetime.now(JST).weekday()]
             subjects_today = settings['schedule'].get(weekday, {})
             if not subjects_today:
                 _reply(api, reply_token, '今日は問題なし設定です')
@@ -351,7 +353,7 @@ def _handle_parent(text, settings, api, reply_token):
             today_data['mission_complete'] = False
             update_today_data(today_data)
         questions = today_data['questions']
-        weekday = WEEKDAY_MAP[datetime.now().weekday()]
+        weekday = WEEKDAY_MAP[datetime.now(JST).weekday()]
         message = format_question_message(questions, weekday)
         api.push_message(PushMessageRequest(
             to=settings['son_user_id'], messages=[TextMessage(text=message)]))
