@@ -231,6 +231,17 @@ def reset():
     return jsonify({'status': 'ok', 'message': 'リセット完了'})
 
 
+@app.route('/reset_saturday')
+def reset_saturday():
+    if request.args.get('token') != CRON_SECRET:
+        abort(403)
+    settings = load_settings()
+    settings['schedule']['土'] = {'数学': 10, '英語': 20, '国語': 20}
+    save_settings(settings)
+    logger.info('土曜スケジュールを元に戻しました')
+    return jsonify({'status': 'ok', 'schedule': settings['schedule']['土']})
+
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     body = request.get_data(as_text=True)
