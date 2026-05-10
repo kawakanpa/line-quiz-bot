@@ -45,6 +45,28 @@ def _load_math_bank():
         return json.load(f).get('problems', [])
 
 
+def get_page_text(grade, page_num):
+    if not os.path.exists(MATH_PAGE_BANK_FILE):
+        return None
+    with open(MATH_PAGE_BANK_FILE, 'r', encoding='utf-8') as f:
+        bank = json.load(f)
+    grade_bank = bank.get(grade, {})
+    for field, pages in grade_bank.items():
+        if page_num in pages:
+            return pages[page_num]
+    return None
+
+
+def get_section_end_text(grade, page_num):
+    text = get_page_text(grade, page_num)
+    if not text:
+        return None
+    idx = text.find('節末問題')
+    if idx == -1:
+        return text  # 「節末問題」がなければ全体を使う
+    return text[idx:]
+
+
 def _has_choices(question_text):
     return 'a. ' in question_text or '\na.' in question_text
 
@@ -133,6 +155,56 @@ JSON形式のみで返してください：
     return questions
 
 
+def _generate_math_from_special_pages(grade, page_numbers, difficulty, count):
+    """指定ページの節末問題から1問ずつGroqで生成"""
+    if not os.path.exists(MATH_PAGE_BANK_FILE):
+        return []
+
+    questions = []
+    for page_num in page_numbers[:count]:
+        page_text = get_section_end_text(grade, page_num)
+        if not page_text:
+            continue
+        prompt = f"""以下は中学数学の問題集（{grade}・p.{page_num}）の節末問題のテキストです。
+この節末問題のテキストから1問の5択問題をつくってください。
+
+テキスト：
+{page_text[:2000]}
+
+ルール：
+- 具体的な場面・状況を設定した文章問題にする（式だけの問題は文章に変換する）
+- 正解1つ＋数学的に紛らわしい誤答4つを生成する
+- 難易度：{difficulty}
+- 「$」「$$」「\(」「\)」などのLaTeX記号は絶対に使わないこと
+- 分数はスラッシュで表記（例：（2x－3）／3）、累乗は「x²」「x³」で表記
+
+JSON形式のみで返してください：
+{{
+  "questions": [
+    {{
+      "subject": "数学",
+      "grade": "{grade}",
+      "field": "p.{page_num}",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
+      "type": "multiple_choice",
+      "answer": "a か b か c か d か e",
+      "explanation": "解き方（2-3文、計算過程を含む）"
+    }}
+  ]
+}}"""
+        try:
+            result = _call_groq(prompt)
+            if result:
+                result[0].setdefault('subject', '数学')
+                result[0]['type'] = 'multiple_choice'
+                questions.append(result[0])
+                logger.info(f'p.{page_num}: 特別ページから1問生成')
+        except Exception as e:
+            logger.error(f'p.{page_num}の特別ページ生成エラー: {e}')
+        time.sleep(4)
+    return questions
+
+
 def generate_question_from_page(page_num_str):
     """指定ページからGroqで問題を1問生成して返す（親プレビュー用）"""
     if not os.path.exists(MATH_PAGE_BANK_FILE):
@@ -147,7 +219,7 @@ def generate_question_from_page(page_num_str):
     for grade, fields in bank.items():
         for field, pages in fields.items():
             if page_num_str in pages:
-                found_text = pages[page_num_str]
+                found_text = get_section_end_text(grade, page_num_str)
                 found_field = field
                 found_grade = grade
                 break
@@ -304,7 +376,7 @@ def _load_kokugo_bank():
 
 
 def _sample_from_kokugo_bank(use_reading):
-    """読解系1問(use_reading=True) か 非読解系10問(False) をバンクから抽出"""
+    """非読解系10問をバンクから抽出（読解系は除外）"""
     bank = _load_kokugo_bank()
     if not bank:
         return []
@@ -313,15 +385,10 @@ def _sample_from_kokugo_bank(use_reading):
         if _has_choices(q.get('question', ''))
         and q.get('answer', '').strip().lower() in ['a', 'b', 'c', 'd', 'e']
     ]
-    reading = [q for q in valid if q.get('field') in KOKUGO_READING_FIELDS]
     non_reading = [q for q in valid if q.get('field') not in KOKUGO_READING_FIELDS]
 
-    if use_reading and reading:
-        return _clean_questions([random.choice(reading)])
-    elif non_reading:
+    if non_reading:
         return _clean_questions(random.sample(non_reading, min(10, len(non_reading))))
-    elif reading:
-        return _clean_questions([random.choice(reading)])
     return []
 
 
@@ -329,6 +396,7 @@ def generate_daily_questions(subjects_today, settings):
     grade = settings['grade']
     difficulty = DIFFICULTY_MAP.get(settings['difficulty'], settings['difficulty'])
     math_fields = settings['math_fields'].get(grade, settings['math_fields']['中学1年'])
+    special_pages = settings.get('math_special_pages', {}).get(grade, [])
     science_fields = settings.get('science_fields', {}).get(grade, [])
 
     all_questions = []
@@ -338,12 +406,21 @@ def generate_daily_questions(subjects_today, settings):
         count = subjects_today[subject]
         try:
             if subject == '数学':
-                questions = _sample_from_bank(grade, math_fields, count)
-                if not questions:
-                    questions = _generate_math_from_page_bank(grade, math_fields, difficulty)
-                if not questions:
-                    logger.info('バンク空のためLLM生成にフォールバック')
-                    questions = _generate_math(count, grade, difficulty, math_fields)
+                if special_pages:
+                    special_count = min(len(special_pages), count)
+                    questions = _generate_math_from_special_pages(grade, special_pages, difficulty, special_count)
+                    remaining = count - len(questions)
+                    if remaining > 0:
+                        questions += _sample_from_bank(grade, math_fields, remaining)
+                        if len(questions) < count:
+                            questions += _generate_math(count - len(questions), grade, difficulty, math_fields)
+                else:
+                    questions = _sample_from_bank(grade, math_fields, count)
+                    if not questions:
+                        questions = _generate_math_from_page_bank(grade, math_fields, difficulty)
+                    if not questions:
+                        logger.info('バンク空のためLLM生成にフォールバック')
+                        questions = _generate_math(count, grade, difficulty, math_fields)
             elif subject == '理科' and science_fields:
                 questions = _sample_from_science_bank(grade, science_fields, count)
                 if not questions:
@@ -354,12 +431,8 @@ def generate_daily_questions(subjects_today, settings):
                 if not questions:
                     questions = _generate_subject(subject, count, grade, difficulty)
             elif subject == '国語':
-                use_reading = settings.get('kokugo_next_type', 'reading') == 'reading'
-                questions = _sample_from_kokugo_bank(use_reading)
-                if questions:
-                    settings['kokugo_next_type'] = 'non_reading' if use_reading else 'reading'
-                    save_settings(settings)
-                else:
+                questions = _sample_from_kokugo_bank(use_reading=False)
+                if not questions:
                     questions = _generate_subject(subject, count, grade, difficulty)
             else:
                 questions = _generate_subject(subject, count, grade, difficulty)
@@ -616,6 +689,8 @@ def _clean_latex(text):
     """LaTeXコマンドや$記号をLINEで読める形に変換する"""
     if not isinstance(text, str):
         return text
+    # JSONパース時に \frac の \f が改頁文字（\x0c）に化けた残骸を復元 ※削除禁止
+    text = re.sub(r'\x0c([a-zA-Z]+)', r'\\f\1', text)
     # \frac{a}{b} → (a/b)（1段ネストまで対応）
     brace = r'\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}'
     text = re.sub(r'\\[dt]?frac\s*' + brace + r'\s*' + brace, r'(\1/\2)', text)
@@ -679,7 +754,10 @@ def _call_groq(prompt):
         temperature=0.7,
         max_tokens=3000
     )
-    data = json.loads(response.choices[0].message.content)
+    content = response.choices[0].message.content
+    # \frac 等が JSON の \f（改頁）として誤解釈され LINE に "rac" と表示されるのを防ぐ ※削除禁止
+    content = re.sub(r'(?<!\\)\\([fFtTbBrR][a-zA-Z]+)', r'\\\\\1', content)
+    data = json.loads(content)
     return _clean_questions(data.get('questions', []))
 
 
