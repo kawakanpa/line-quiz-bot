@@ -693,7 +693,10 @@ def _clean_latex(text):
     text = re.sub(r'\x0c([a-zA-Z]+)', r'\\f\1', text)
     # \frac{a}{b} → (a/b)（1段ネストまで対応）
     brace = r'\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}'
-    text = re.sub(r'\\[dt]?frac\s*' + brace + r'\s*' + brace, r'(\1)/\2', text)
+    def _frac(m):
+        num, den = m.group(1), m.group(2)
+        return f'({num})/{den}' if re.search(r'[+\-]', num) else f'{num}/{den}'
+    text = re.sub(r'\\[dt]?frac\s*' + brace + r'\s*' + brace, _frac, text)
     # マッチしなかった \frac を除去
     text = re.sub(r'\\[dt]?frac\b', '', text)
     # \sqrt{x} → √x
