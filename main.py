@@ -242,6 +242,30 @@ def reset_saturday():
     return jsonify({'status': 'ok', 'schedule': settings['schedule']['土']})
 
 
+@app.route('/migrate_grade2')
+def migrate_grade2():
+    """中学2年・数学20問・特別ページ20件に一括移行する一回限りエンドポイント"""
+    if request.args.get('token') != CRON_SECRET:
+        abort(403)
+    settings = load_settings()
+    settings['grade'] = '中学2年'
+    for day in settings['schedule']:
+        if '数学' in settings['schedule'][day]:
+            settings['schedule'][day]['数学'] = 20
+    settings['math_special_pages']['中学2年'] = [
+        '98', '103', '110', '197', '203',
+        '4', '6', '8', '10', '12', '14', '16', '18', '20',
+        '22', '24', '26', '28', '30', '32'
+    ]
+    save_settings(settings)
+    logger.info('中学2年移行完了')
+    return jsonify({
+        'status': 'ok',
+        'grade': settings['grade'],
+        'math_special_pages_count': len(settings['math_special_pages']['中学2年'])
+    })
+
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     body = request.get_data(as_text=True)
