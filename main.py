@@ -114,13 +114,30 @@ def update_today_data(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def _push_text(api, to, text, limit=4900):
+    """5000文字制限を超える場合は複数に分割して送信"""
+    if len(text) <= limit:
+        api.push_message(PushMessageRequest(to=to, messages=[TextMessage(text=text)]))
+        return
+    lines = text.split('\n')
+    chunk = ''
+    for line in lines:
+        if len(chunk) + len(line) + 1 > limit:
+            if chunk:
+                api.push_message(PushMessageRequest(to=to, messages=[TextMessage(text=chunk.rstrip())]))
+            chunk = line + '\n'
+        else:
+            chunk += line + '\n'
+    if chunk.strip():
+        api.push_message(PushMessageRequest(to=to, messages=[TextMessage(text=chunk.rstrip())]))
+
+
 def _push_to_parents(api, settings, text):
     """登録済みの全親アカウントにpush送信する"""
     for key in ('parent_user_id', 'parent2_user_id'):
         uid = settings.get(key)
         if uid:
-            api.push_message(PushMessageRequest(
-                to=uid, messages=[TextMessage(text=text)]))
+            _push_text(api, uid, text)
 
 
 def _regenerate_in_background(subjects_today, settings, weekday):
@@ -141,9 +158,7 @@ def _regenerate_in_background(subjects_today, settings, weekday):
                 return
             save_today_data(questions)
             message = format_question_message(questions, weekday)
-            api.push_message(PushMessageRequest(
-                to=settings['son_user_id'],
-                messages=[TextMessage(text=message)]))
+            _push_text(api, settings['son_user_id'], message)
             _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
         except Exception as e:
             logger.error(f'再生成push送信エラー: {e}')
@@ -235,10 +250,7 @@ def cron():
 
     with ApiClient(configuration) as api_client:
         api = MessagingApi(api_client)
-        api.push_message(PushMessageRequest(
-            to=son_user_id,
-            messages=[TextMessage(text=message)]
-        ))
+        _push_text(api, son_user_id, message)
         _push_to_parents(api, settings, f'【本日の問題を送信しました】\n\n{message}')
 
     logger.info(f'問題送信完了: {len(questions)}問')
@@ -427,8 +439,7 @@ def _handle_parent(text, settings, api, reply_token):
         questions = today_data['questions']
         weekday = WEEKDAY_MAP[datetime.now(JST).weekday()]
         message = format_question_message(questions, weekday)
-        api.push_message(PushMessageRequest(
-            to=settings['son_user_id'], messages=[TextMessage(text=message)]))
+        _push_text(api, settings['son_user_id'], message)
         _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
         return
 
