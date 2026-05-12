@@ -347,7 +347,6 @@ def handle_message(event):
             _handle_son(text, settings, api, event.reply_token)
         else:
             logger.warning(f'未登録ユーザー: {user_id}')
-            logger.warning(f'ID比較デバッグ: user_id={repr(user_id)} son_id={repr(son_id)} equal={user_id == son_id}')
 
 
 def _parse_tomorrow_override(text):
