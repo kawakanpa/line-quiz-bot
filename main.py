@@ -123,6 +123,32 @@ def _push_to_parents(api, settings, text):
                 to=uid, messages=[TextMessage(text=text)]))
 
 
+def _regenerate_in_background(subjects_today, settings, weekday):
+    """バックグラウンドで問題を再生成し、完成したらpush送信"""
+    try:
+        questions = generate_daily_questions(subjects_today, settings)
+    except Exception as e:
+        logger.error(f'問題再生成エラー: {e}')
+        questions = None
+
+    with ApiClient(configuration) as api_client:
+        api = MessagingApi(api_client)
+        try:
+            if not questions:
+                api.push_message(PushMessageRequest(
+                    to=settings['parent_user_id'],
+                    messages=[TextMessage(text='問題の再生成に失敗しました')]))
+                return
+            save_today_data(questions)
+            message = format_question_message(questions, weekday)
+            api.push_message(PushMessageRequest(
+                to=settings['son_user_id'],
+                messages=[TextMessage(text=message)]))
+            _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
+        except Exception as e:
+            logger.error(f'再生成push送信エラー: {e}')
+
+
 def _generate_retry_in_background(wrong_questions, settings):
     """バックグラウンドで再挑戦問題を生成し、完成したらpush送信"""
     try:
@@ -378,22 +404,21 @@ def _handle_parent(text, settings, api, reply_token):
     if text == '再送信':
         today_data = get_today_data()
         if not today_data:
-            # ファイルが消えている場合は再生成
+            # 問題データなし → バックグラウンドで再生成
             weekday = WEEKDAY_MAP[datetime.now(JST).weekday()]
             subjects_today = settings['schedule'].get(weekday, {})
             if not subjects_today:
                 _reply(api, reply_token, '今日は問題なし設定です')
                 return
-            _reply(api, reply_token, '問題を再生成中です。少々お待ちください...')
-            questions = generate_daily_questions(subjects_today, settings)
-            if not questions:
-                api.push_message(PushMessageRequest(
-                    to=settings['parent_user_id'], messages=[TextMessage(text='問題の再生成に失敗しました')]))
-                return
-            save_today_data(questions)
-            today_data = get_today_data()
+            _reply(api, reply_token, '問題を再生成中です。最大10分ほどお待ちください...')
+            threading.Thread(
+                target=_regenerate_in_background,
+                args=(subjects_today, settings, weekday),
+                daemon=False
+            ).start()
+            return
         else:
-            # 回答状態をリセットして再挑戦できるようにする
+            # 問題データあり → 回答状態をリセットして再送信
             today_data['answered'] = False
             today_data['retry_questions'] = None
             today_data['retry_round'] = 0
