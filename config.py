@@ -57,11 +57,11 @@ def load_settings():
 
     # env vars take priority for user IDs
     if os.environ.get('SON_USER_ID'):
-        settings['son_user_id'] = os.environ['SON_USER_ID']
+        settings['son_user_id'] = os.environ['SON_USER_ID'].strip()
     if os.environ.get('PARENT_USER_ID'):
-        settings['parent_user_id'] = os.environ['PARENT_USER_ID']
+        settings['parent_user_id'] = os.environ['PARENT_USER_ID'].strip()
     if os.environ.get('PARENT2_USER_ID'):
-        settings['parent2_user_id'] = os.environ['PARENT2_USER_ID']
+        settings['parent2_user_id'] = os.environ['PARENT2_USER_ID'].strip()
 
     return settings
 
