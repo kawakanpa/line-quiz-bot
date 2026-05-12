@@ -482,10 +482,49 @@ def _generate_math(count, grade, difficulty, math_fields):
     return _call_groq(prompt)
 
 
+ENGLISH_PROMPT_TEMPLATE = """You are a Japanese junior high school English teacher. Create {count} English grammar/vocabulary questions for {grade} students.
+
+STRICT RULES:
+- Every question MUST contain an actual English sentence (never Japanese-only questions)
+- Fill-in-the-blank: use ( ) inside an English sentence, e.g. "She ( ) to school every day."
+- All answer choices MUST be English words or phrases (NO Japanese answer choices)
+- Grammar topics for 中学2年: comparatives/superlatives, to-infinitives, gerunds, passive voice, conjunctions (because/when/if/that), modals (must/should/will/can)
+- Vocabulary topics: common 中学2年 English words used in sentences
+
+GOOD EXAMPLES:
+- He ( ) a student.  a. am  b. is  c. are  d. be  e. was  → answer: b  field: be動詞
+- She is ( ) than her sister.  a. tall  b. taller  c. tallest  d. more tall  e. most tall  → answer: b  field: 比較級
+- I want ( ) go shopping.  a. to  b. at  c. on  d. by  e. for  → answer: a  field: 不定詞
+- English is ( ) all over the world.  a. speak  b. spoke  c. spoken  d. speaking  e. speaks  → answer: c  field: 受動態
+
+BAD EXAMPLES (NEVER DO THIS):
+- "私は___を持っています" with Japanese choices → WRONG (no English sentence)
+- "car はどれか  a.ペン b.鉛筆 c.リンゴ" → WRONG (Japanese choices)
+
+Return JSON only:
+{{
+  "questions": [
+    {{
+      "subject": "英語",
+      "field": "文法分野名（例：比較級、不定詞、受動態、be動詞、助動詞）",
+      "question": "English sentence with ( ) for blank\\na. choice1  b. choice2  c. choice3  d. choice4  e. choice5",
+      "type": "multiple_choice",
+      "answer": "a or b or c or d or e",
+      "explanation": "日本語で解説（なぜその答えか、文法ポイントを2-3文で）"
+    }}
+  ]
+}}
+
+Create exactly {count} questions."""
+
+
 def _generate_subject(subject, count, grade, difficulty):
+    if subject == '英語':
+        prompt = ENGLISH_PROMPT_TEMPLATE.format(count=count, grade=grade)
+        return _call_groq(prompt)
+
     guidance = {
         '国語': 'ことわざ・慣用句、文法、漢字、文学作品など',
-        '英語': '英検4級レベル（単語・熟語、基本文法、短文穴埋めなど）',
         '社会': '歴史・地理・公民（中学範囲）',
         '理科': '計算問題を中心に出題（オームの法則・速さ・密度・圧力・化学計算など）。図や実験装置が必要な問題は除外。',
     }
@@ -509,7 +548,7 @@ def _generate_subject(subject, count, grade, difficulty):
   ]
 }}
 
-{'難易度：英検4級レベル' if subject == '英語' else f'難易度：{difficulty}、学年：{grade}'}
+難易度：{difficulty}、学年：{grade}
 問題文は簡潔に終わること。「どうなるでしょうか」「何と言いますか」などの冗長な表現は使わず、「〜はどれか」「〜を選べ」「〜はいつか」のように短くまとめること。
 全{count}問を必ず含めること。"""
 
@@ -584,19 +623,43 @@ def _make_math_retry_prompt(q, grade, difficulty):
 
 
 def _make_subject_retry_prompt(q, subject, grade, difficulty):
+    if subject == '英語':
+        return f"""You are a Japanese junior high school English teacher.
+Create 1 new English question on the same grammar point as the original, with different content.
+
+Original question: {q['question']}
+Grammar field: {q['field']}
+
+STRICT RULES:
+- Question MUST contain an actual English sentence with ( ) for the blank
+- All answer choices MUST be English words or phrases (NO Japanese choices)
+- 3 choices only (a/b/c)
+
+Return JSON only:
+{{
+  "questions": [
+    {{
+      "subject": "英語",
+      "field": "{q['field']}",
+      "question": "English sentence with ( )\\na. choice1  b. choice2  c. choice3",
+      "type": "multiple_choice",
+      "answer": "a or b or c",
+      "explanation": "日本語で解説（文法ポイントを2-3文で）"
+    }}
+  ]
+}}"""
+
     guidance = {
         '国語': 'ことわざ・慣用句、文法、漢字、文学作品など',
-        '英語': '英検4級レベル（単語・熟語、基本文法、短文穴埋めなど）',
         '社会': '歴史・地理・公民（中学範囲）',
         '理科': '計算問題を中心に出題（オームの法則・速さ・密度・圧力・化学計算など）',
     }
-    diff_str = '難易度：英検4級レベル' if subject == '英語' else f'難易度：{difficulty}、学年：{grade}'
     return f"""あなたは中学{subject}の教師です。
 以下の問題と同じ分野・同じ形式で、内容を変えた問題を1問作成してください。
 
 元の問題: {q['question']}
 分野: {q['field']}
-{diff_str}
+難易度：{difficulty}、学年：{grade}
 参考：{guidance.get(subject, '')}
 
 問題形式：3択（a/b/c）
