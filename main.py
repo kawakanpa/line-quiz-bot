@@ -355,6 +355,30 @@ def reset():
     return jsonify({'status': 'ok', 'message': 'リセット完了'})
 
 
+@app.route('/create_form')
+def create_form_endpoint():
+    """今日の問題からGoogle Formを作成してURLを返す（ブラウザで確認用）"""
+    if request.args.get('token') != CRON_SECRET:
+        abort(403)
+
+    today_data = get_today_data()
+    if not today_data:
+        return jsonify({'status': 'error', 'message': '今日の問題データがありません'})
+
+    questions = today_data['questions']
+    now = datetime.now(JST)
+    weekday = WEEKDAY_MAP[now.weekday()]
+    date_str = f'{now.year}年{now.month}月{now.day}日({weekday})'
+    form_url = create_quiz_form(questions, f'今日のクイズ {date_str}')
+
+    if form_url:
+        today_data['form_url'] = form_url
+        update_today_data(today_data)
+        return jsonify({'status': 'ok', 'url': form_url, 'count': len(questions)})
+    else:
+        return jsonify({'status': 'error', 'message': 'フォーム作成に失敗しました'}), 500
+
+
 @app.route('/reset_saturday')
 def reset_saturday():
     if request.args.get('token') != CRON_SECRET:
