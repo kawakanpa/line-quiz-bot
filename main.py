@@ -227,6 +227,37 @@ def _regenerate_in_background(subjects_today, settings, weekday):
             logger.error(f'再生成push送信エラー: {e}')
 
 
+def _create_form_and_send_in_background(questions, settings, weekday, son_user_id):
+    """既存問題からフォームを作成してpush送信（再送信用）"""
+    try:
+        today = datetime.now(JST)
+        date_str = f'{today.year}年{today.month}月{today.day}日({weekday})'
+        form_url = create_quiz_form(questions, f'今日のクイズ {date_str}')
+        with ApiClient(configuration) as api_client:
+            api = MessagingApi(api_client)
+            if form_url:
+                today_data = get_today_data()
+                if today_data:
+                    today_data['form_url'] = form_url
+                    update_today_data(today_data)
+                subjects_str = '・'.join({q['subject'] for q in questions})
+                son_msg = (
+                    f'【今日のクイズ】{date_str}\n'
+                    f'科目：{subjects_str}（{len(questions)}問）\n\n'
+                    f'以下のリンクから回答してね！\n'
+                    f'{form_url}'
+                )
+                api.push_message(PushMessageRequest(to=son_user_id, messages=[TextMessage(text=son_msg)]))
+                _push_to_parents(api, settings, f'【問題を再送信しました】\nフォームURL：\n{form_url}')
+            else:
+                message = format_question_message(questions, weekday)
+                _push_text(api, son_user_id, message)
+                _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
+        logger.info(f'フォーム作成・再送信完了: form_url={form_url}')
+    except Exception as e:
+        logger.error(f'フォーム作成・再送信エラー: {e}')
+
+
 def _generate_retry_in_background(wrong_questions, settings):
     """バックグラウンドで再挑戦問題を生成し、完成したらpush送信"""
     try:
@@ -505,9 +536,14 @@ def _handle_parent(text, settings, api, reply_token):
             _push_text(api, settings['son_user_id'], son_msg)
             _push_to_parents(api, settings, f'【問題を再送信しました】\nフォームURL：\n{form_url}')
         else:
-            message = format_question_message(questions, weekday)
-            _push_text(api, settings['son_user_id'], message)
-            _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
+            # form_urlなし → バックグラウンドでフォーム作成してから送信
+            _reply(api, reply_token, 'フォームを作成中です。30秒ほどお待ちください...')
+            threading.Thread(
+                target=_create_form_and_send_in_background,
+                args=(questions, settings, weekday, settings['son_user_id']),
+                daemon=False
+            ).start()
+            return
         return
 
     if text.startswith('プレビュー:'):
