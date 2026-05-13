@@ -140,6 +140,24 @@ def _push_to_parents(api, settings, text):
             _push_text(api, uid, text)
 
 
+def _deliver_in_background(subjects_today, settings, weekday, son_user_id):
+    """バックグラウンドで問題を生成してpush送信（cron用）"""
+    try:
+        questions = generate_daily_questions(subjects_today, settings)
+        if not questions:
+            logger.error('バックグラウンド問題生成失敗')
+            return
+        save_today_data(questions)
+        message = format_question_message(questions, weekday)
+        with ApiClient(configuration) as api_client:
+            api = MessagingApi(api_client)
+            _push_text(api, son_user_id, message)
+            _push_to_parents(api, settings, f'【本日の問題を送信しました】\n\n{message}')
+        logger.info(f'バックグラウンド配信完了: {len(questions)}問')
+    except Exception as e:
+        logger.error(f'バックグラウンド配信エラー: {e}')
+
+
 def _regenerate_in_background(subjects_today, settings, weekday):
     """バックグラウンドで問題を再生成し、完成したらpush送信"""
     try:
@@ -240,21 +258,13 @@ def cron():
     if not subjects_today:
         return jsonify({'status': 'skipped', 'message': f'{weekday}曜日は問題なし'})
 
-    logger.info(f'{weekday}曜日の問題生成: {subjects_today}')
-    questions = generate_daily_questions(subjects_today, settings)
-    if not questions:
-        return jsonify({'status': 'error', 'message': '問題生成失敗'}), 500
-
-    save_today_data(questions)
-    message = format_question_message(questions, weekday)
-
-    with ApiClient(configuration) as api_client:
-        api = MessagingApi(api_client)
-        _push_text(api, son_user_id, message)
-        _push_to_parents(api, settings, f'【本日の問題を送信しました】\n\n{message}')
-
-    logger.info(f'問題送信完了: {len(questions)}問')
-    return jsonify({'status': 'ok', 'questions': len(questions)})
+    logger.info(f'{weekday}曜日の問題生成開始（バックグラウンド）: {subjects_today}')
+    threading.Thread(
+        target=_deliver_in_background,
+        args=(subjects_today, settings, weekday, son_user_id),
+        daemon=False
+    ).start()
+    return jsonify({'status': 'ok', 'message': 'バックグラウンドで問題生成中'})
 
 
 
