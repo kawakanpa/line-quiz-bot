@@ -824,7 +824,13 @@ def _call_groq(prompt):
     # \frac 等が JSON の \f（改頁）として誤解釈され LINE に "rac" と表示されるのを防ぐ ※削除禁止
     content = re.sub(r'(?<!\\)\\([fFtTbBrR][a-zA-Z]+)', r'\\\\\1', content)
     data = json.loads(content)
-    return _clean_questions(data.get('questions', []))
+    questions = _clean_questions(data.get('questions', []))
+    # 選択肢が埋め込まれていない問題はスキップ
+    valid = [q for q in questions if _has_choices(q.get('question', ''))]
+    dropped = len(questions) - len(valid)
+    if dropped:
+        logger.warning(f'選択肢なし問題を{dropped}問スキップ')
+    return valid
 
 
 def format_question_message(questions, weekday):
