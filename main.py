@@ -20,6 +20,7 @@ from config import load_settings, save_settings
 from quiz import (generate_daily_questions, format_question_message, grade_and_format,
                   generate_retry_questions, format_retry_message, grade_retry,
                   generate_question_from_page)
+from google_forms import create_quiz_form
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -94,14 +95,15 @@ def get_today_data():
     return data
 
 
-def save_today_data(questions):
+def save_today_data(questions, form_url=None):
     data = {
         'date': datetime.now(JST).strftime('%Y-%m-%d'),
         'questions': questions,
         'answered': False,
         'retry_questions': None,
         'retry_round': 0,
-        'mission_complete': False
+        'mission_complete': False,
+        'form_url': form_url
     }
     _gist_save(data)
     with open(TODAY_FILE, 'w', encoding='utf-8') as f:
@@ -147,13 +149,35 @@ def _deliver_in_background(subjects_today, settings, weekday, son_user_id):
         if not questions:
             logger.error('バックグラウンド問題生成失敗')
             return
-        save_today_data(questions)
-        message = format_question_message(questions, weekday)
+
+        today = datetime.now(JST)
+        date_str = f'{today.year}年{today.month}月{today.day}日({weekday})'
+        form_url = create_quiz_form(questions, f'今日のクイズ {date_str}')
+        save_today_data(questions, form_url)
+
         with ApiClient(configuration) as api_client:
             api = MessagingApi(api_client)
-            _push_text(api, son_user_id, message)
-            _push_to_parents(api, settings, f'【本日の問題を送信しました】\n\n{message}')
-        logger.info(f'バックグラウンド配信完了: {len(questions)}問')
+            if form_url:
+                subjects_str = '・'.join(subjects_today.keys())
+                son_msg = (
+                    f'【今日のクイズ】{date_str}\n'
+                    f'科目：{subjects_str}（{len(questions)}問）\n\n'
+                    f'以下のリンクから回答してね！\n'
+                    f'{form_url}'
+                )
+                api.push_message(PushMessageRequest(to=son_user_id, messages=[TextMessage(text=son_msg)]))
+                parent_msg = (
+                    f'【本日の問題を送信しました】\n'
+                    f'科目：{subjects_str}（{len(questions)}問）\n\n'
+                    f'フォームURL：\n{form_url}'
+                )
+                _push_to_parents(api, settings, parent_msg)
+            else:
+                message = format_question_message(questions, weekday)
+                _push_text(api, son_user_id, message)
+                _push_to_parents(api, settings, f'【本日の問題を送信しました】\n\n{message}')
+
+        logger.info(f'バックグラウンド配信完了: {len(questions)}問, form_url={form_url}')
     except Exception as e:
         logger.error(f'バックグラウンド配信エラー: {e}')
 
@@ -174,10 +198,31 @@ def _regenerate_in_background(subjects_today, settings, weekday):
                     to=settings['parent_user_id'],
                     messages=[TextMessage(text='問題の再生成に失敗しました')]))
                 return
-            save_today_data(questions)
-            message = format_question_message(questions, weekday)
-            _push_text(api, settings['son_user_id'], message)
-            _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
+
+            today = datetime.now(JST)
+            date_str = f'{today.year}年{today.month}月{today.day}日({weekday})'
+            form_url = create_quiz_form(questions, f'今日のクイズ {date_str}')
+            save_today_data(questions, form_url)
+
+            if form_url:
+                subjects_str = '・'.join(subjects_today.keys())
+                son_msg = (
+                    f'【今日のクイズ】{date_str}\n'
+                    f'科目：{subjects_str}（{len(questions)}問）\n\n'
+                    f'以下のリンクから回答してね！\n'
+                    f'{form_url}'
+                )
+                _push_text(api, settings['son_user_id'], son_msg)
+                parent_msg = (
+                    f'【問題を再送信しました】\n'
+                    f'科目：{subjects_str}（{len(questions)}問）\n\n'
+                    f'フォームURL：\n{form_url}'
+                )
+                _push_to_parents(api, settings, parent_msg)
+            else:
+                message = format_question_message(questions, weekday)
+                _push_text(api, settings['son_user_id'], message)
+                _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
         except Exception as e:
             logger.error(f'再生成push送信エラー: {e}')
 
@@ -448,9 +493,21 @@ def _handle_parent(text, settings, api, reply_token):
             update_today_data(today_data)
         questions = today_data['questions']
         weekday = WEEKDAY_MAP[datetime.now(JST).weekday()]
-        message = format_question_message(questions, weekday)
-        _push_text(api, settings['son_user_id'], message)
-        _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
+        form_url = today_data.get('form_url')
+        if form_url:
+            subjects_str = '・'.join({q['subject'] for q in questions})
+            son_msg = (
+                f'【今日のクイズ（再送）】\n'
+                f'科目：{subjects_str}（{len(questions)}問）\n\n'
+                f'以下のリンクから回答してね！\n'
+                f'{form_url}'
+            )
+            _push_text(api, settings['son_user_id'], son_msg)
+            _push_to_parents(api, settings, f'【問題を再送信しました】\nフォームURL：\n{form_url}')
+        else:
+            message = format_question_message(questions, weekday)
+            _push_text(api, settings['son_user_id'], message)
+            _push_to_parents(api, settings, f'【問題を再送信しました】\n\n{message}')
         return
 
     if text.startswith('プレビュー:'):
@@ -492,6 +549,12 @@ def _handle_son(text, settings, api, reply_token):
 
     if not today_data:
         _reply(api, reply_token, '今日の問題はまだ来てないよ！12時になったら届くから待ってね。')
+        return
+
+    # Google Formモード：フォームURLがある場合はそちらに誘導
+    form_url = today_data.get('form_url')
+    if form_url:
+        _reply(api, reply_token, f'今日の問題はGoogleフォームで回答してね！\n\n{form_url}')
         return
 
     retry_questions = today_data.get('retry_questions')
