@@ -2,7 +2,7 @@ name: 毎日クイズ生成
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # 毎日 3:00 UTC = 12:00 JST
+    - cron: '0 18 * * *'  # 毎日 18:00 UTC = 翌3:00 JST
   workflow_dispatch:       # GitHub上からも手動実行可能
 
 permissions:
