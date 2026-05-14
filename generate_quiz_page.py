@@ -25,13 +25,13 @@ def _parse_choices(question_text):
     """問題文から(本文, 選択肢リスト)を返す"""
     if not question_text:
         return '', []
-    sep = re.search(r'(\n\s*a\.|\s{2,}a\.)', question_text)
+    sep = re.search(r'(\n\s*a\.|\s+a\.(?=\s))', question_text)
     if not sep:
         return question_text.strip(), []
     main_q = question_text[:sep.start()].strip()
     choice_text = question_text[sep.start():].strip()
     choices = []
-    for m in re.finditer(r'\b([a-e])\.\s+(.+?)(?=\s+[a-e]\.\s|$)', choice_text):
+    for m in re.finditer(r'\b([a-e])\.\s+(.+?)(?=\s+[a-e]\.\s|\s+[a-e]\.$|$)', choice_text):
         choices.append(m.group(2).strip())
     return main_q, choices
 
@@ -44,10 +44,14 @@ def _get_answer_index(q):
 def _prepare_item(q, retry_q=None):
     """問題データをHTML埋め込み用に整形する"""
     main_q, choices = _parse_choices(q.get('question') or '')
+    if not choices:
+        choices = [str(c) for c in q.get('choices', []) if c]
     ans_idx = _get_answer_index(q)
 
     if retry_q:
         retry_main, retry_choices = _parse_choices(retry_q.get('question') or '')
+        if not retry_choices:
+            retry_choices = [str(c) for c in retry_q.get('choices', []) if c]
         retry = {
             'question': retry_main,
             'choices': retry_choices,
