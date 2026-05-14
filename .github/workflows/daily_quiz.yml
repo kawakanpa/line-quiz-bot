@@ -32,6 +32,8 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
           PAGES_BASE_URL: https://kawakanpa.github.io/line-quiz-bot
+          APPS_SCRIPT_NOTIFY_URL: ${{ secrets.APPS_SCRIPT_NOTIFY_URL }}
+          APPS_SCRIPT_NOTIFY_SECRET: ${{ secrets.APPS_SCRIPT_NOTIFY_SECRET }}
         run: python generate_quiz_page.py
 
       - name: 生成したHTMLをコミット & プッシュ

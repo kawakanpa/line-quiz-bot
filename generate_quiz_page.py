@@ -101,7 +101,7 @@ def _send_email(to_addr, subject, html_body):
         return False
 
 
-def _build_html(questions_data, date_str, subjects_str):
+def _build_html(questions_data, date_str, subjects_str, notify_url='', notify_secret='', quiz_url=''):
     """クイズHTMLページを生成する"""
     count = len(questions_data)
     data_json = json.dumps(questions_data, ensure_ascii=False)
@@ -163,6 +163,10 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","
 <script>
 const QS={data_json};
 const LC=['a','b','c','d','e'];
+const NOTIFY_URL='{notify_url}';
+const NOTIFY_SECRET='{notify_secret}';
+const DATE_STR='{date_str}';
+const QUIZ_URL='{quiz_url}';
 function esc(s){{return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}}
 function init(){{
   let h='';
@@ -199,10 +203,12 @@ function submitAll(){{
   const missing=QS.reduce((a,_,i)=>{{if(!document.querySelector(`input[name="q${{i}}"]:checked`))a.push(i+1);return a;}},[]);
   if(missing.length){{alert(`問${{missing.join('、')}}がまだ答えていません！`);return;}}
   let cor=0;
+  const resList=[];
   QS.forEach((q,i)=>{{
     const sv=parseInt(document.querySelector(`input[name="q${{i}}"]:checked`).value);
     const ok=sv===q.answer_index;
     if(ok)cor++;
+    resList.push({{num:i+1,subject:q.subject,field:q.field,correct:ok}});
     document.querySelectorAll(`#ch-${{i}} .clabel`).forEach((l,li)=>{{
       if(li===q.answer_index)l.classList.add('hl-ok');
       else if(li===sv&&!ok)l.classList.add('hl-ng');
@@ -220,6 +226,7 @@ function submitAll(){{
   sc.style.display='block';
   document.getElementById('subwrap').style.display='none';
   sc.scrollIntoView({{behavior:'smooth'}});
+  sendResultsNotification(cor,resList);
 }}
 function markOk(i){{document.getElementById(`rbtns-${{i}}`).innerHTML='<span class="ok-msg">✓ 理解しました！</span>';}}
 function showRetry(i){{
@@ -243,6 +250,15 @@ function submitRetry(i){{
     `<span class="badge-ng">✗ 不正解（正解: ${{LC[rq.answer_index]}}）</span>`;
   document.getElementById(`rres-${{i}}`).style.display='block';
   document.getElementById(`rcbtn-${{i}}`).style.display='none';
+}}
+function sendResultsNotification(cor,resList){{
+  if(!NOTIFY_URL)return;
+  const payload=JSON.stringify({{secret:NOTIFY_SECRET,type:'results',date:DATE_STR,score:cor,total:QS.length,results:resList,quiz_url:QUIZ_URL}});
+  fetch(NOTIFY_URL,{{method:'POST',mode:'no-cors',body:payload}}).catch(()=>{{}});
+  if(cor===QS.length){{
+    const p=JSON.stringify({{secret:NOTIFY_SECRET,type:'perfect',date:DATE_STR,total:QS.length,quiz_url:QUIZ_URL}});
+    setTimeout(()=>fetch(NOTIFY_URL,{{method:'POST',mode:'no-cors',body:p}}).catch(()=>{{}}),500);
+  }}
 }}
 init();
 </script>
@@ -285,16 +301,19 @@ def main():
     questions_data = [_prepare_item(q, retry_map.get(i)) for i, q in enumerate(questions)]
 
     subjects_str = '・'.join(dict.fromkeys(q.get('subject', '') for q in questions))
-    html = _build_html(questions_data, date_str, subjects_str)
 
+    pages_base = os.environ.get('PAGES_BASE_URL', '').rstrip('/')
     os.makedirs('docs', exist_ok=True)
     filepath = f'docs/quiz-{date_key}.html'
+    quiz_url = f'{pages_base}/quiz-{date_key}.html' if pages_base else filepath
+
+    notify_url = os.environ.get('APPS_SCRIPT_NOTIFY_URL', '')
+    notify_secret = os.environ.get('APPS_SCRIPT_NOTIFY_SECRET', '')
+    html = _build_html(questions_data, date_str, subjects_str, notify_url, notify_secret, quiz_url)
+
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(html)
     logger.info(f'HTML保存完了: {filepath}')
-
-    pages_base = os.environ.get('PAGES_BASE_URL', '').rstrip('/')
-    quiz_url = f'{pages_base}/quiz-{date_key}.html' if pages_base else filepath
 
     recipient = os.environ.get('RECIPIENT_EMAIL')
     if recipient:
