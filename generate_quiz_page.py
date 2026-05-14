@@ -178,8 +178,7 @@ function init(){{
   <div id="bdg-${{i}}"></div>
   <div class="expl">${{esc(q.explanation)}}</div>
   <div class="rbtns" id="rbtns-${{i}}">
-    <button class="btn btn-ok" onclick="markOk(${{i}})">わかった！✓</button>
-    <button class="btn btn-retry" onclick="showRetry(${{i}})">もう一度やる 🔄</button>
+    <button class="btn btn-retry" onclick="showRetry(${{i}})">わかった！練習問題を解く 🔄</button>
   </div>
 </div>
 <div class="retrybox" id="retry-${{i}}">
