@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
 MODEL = 'llama-3.3-70b-versatile'
 
-SUBJECT_ORDER = ['数学', '国語', '社会', '理科', '英語']
+SUBJECT_ORDER = ['国語', '社会', '理科', '英語', '数学']
 MATH_BANK_FILE = 'math_problems.json'
 MATH_PAGE_BANK_FILE = 'math_page_bank.json'
 SCIENCE_BANK_FILE = 'science_problems.json'
@@ -76,7 +76,9 @@ def _sample_from_bank(grade, math_fields, count=10):
     bank = _load_math_bank()
     if not bank:
         return []
-    grade_filtered = [q for q in bank if q.get('grade') == grade] or bank
+    grade_filtered = [q for q in bank if q.get('grade') == grade]
+    if not grade_filtered:
+        return []  # 学年外の問題を混入させない
     valid = [
         q for q in grade_filtered
         if _has_choices(q.get('question', ''))
@@ -276,7 +278,9 @@ def _sample_from_science_bank(grade, science_fields, count=5):
     bank = _load_science_bank()
     if not bank:
         return []
-    grade_filtered = [q for q in bank if q.get('grade') == grade] or bank
+    grade_filtered = [q for q in bank if q.get('grade') == grade]
+    if not grade_filtered:
+        return []  # 学年外の問題を混入させない
     valid = [
         q for q in grade_filtered
         if _has_choices(q.get('question', ''))
@@ -556,6 +560,26 @@ def _generate_subject(subject, count, grade, difficulty):
 
 
 MAX_RETRY_QUESTIONS = 30
+
+
+def get_math_retry_from_bank(q, settings):
+    """数学の再挑戦問題をバンクから別の問題を取得する（LLM不使用）"""
+    grade = settings['grade']
+    field = q.get('field', '')
+    q_id = q.get('id')
+    bank = _load_math_bank()
+    if not bank:
+        return None
+    valid = [p for p in bank
+             if p.get('grade') == grade
+             and p.get('id') != q_id
+             and _has_choices(p.get('question', ''))
+             and p.get('answer', '').strip().lower() in 'abcde']
+    same_field = [p for p in valid if field and field in p.get('field', '')]
+    candidates = same_field if same_field else valid
+    if not candidates:
+        return None
+    return _clean_questions([random.choice(candidates)])[0]
 
 
 def generate_retry_questions(wrong_questions, settings):
