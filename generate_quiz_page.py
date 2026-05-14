@@ -304,6 +304,7 @@ def main():
 <p style="margin:16px 0">
   <a href="{quiz_url}" style="display:inline-block;background:#2e7d32;color:white;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:1.1em">クイズを開く</a>
 </p>
+<p style="margin:8px 0;font-size:.9em;color:#333">URL：<a href="{quiz_url}" style="color:#1976d2;word-break:break-all">{quiz_url}</a></p>
 <p style="color:#666;font-size:.9em">リンクをゆうに送ってください。</p>
 </div>'''
         _send_email(recipient, f'今日のクイズ {date_str}', body)
