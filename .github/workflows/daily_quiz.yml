@@ -23,7 +23,7 @@ jobs:
           python-version: '3.11'
 
       - name: 依存パッケージをインストール
-        run: pip install groq requests
+        run: pip install groq requests python-dotenv
 
       - name: クイズページを生成
         env:
