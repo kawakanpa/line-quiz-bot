@@ -578,7 +578,7 @@ def generate_retry_questions(wrong_questions, settings):
                 prompt = _make_math_retry_prompt(q, grade, difficulty)
             else:
                 prompt = _make_subject_retry_prompt(q, subject, grade, difficulty)
-            questions = _call_groq(prompt)
+            questions = _call_groq_retry(prompt)
             if questions:
                 questions[0].setdefault('subject', subject)
                 questions[0]['type'] = 'multiple_choice'
@@ -613,9 +613,10 @@ def _make_math_retry_prompt(q, grade, difficulty):
     {{
       "subject": "数学",
       "field": "{q['field']}",
-      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3",
+      "choices": ["選択肢1", "選択肢2", "選択肢3"],
       "type": "multiple_choice",
-      "answer": "a か b か c か d か e",
+      "answer": "a か b か c",
       "explanation": "解き方（2文程度、計算過程を含む）"
     }}
   ]
@@ -642,6 +643,7 @@ Return JSON only:
       "subject": "英語",
       "field": "{q['field']}",
       "question": "English sentence with ( )\\na. choice1  b. choice2  c. choice3",
+      "choices": ["choice1", "choice2", "choice3"],
       "type": "multiple_choice",
       "answer": "a or b or c",
       "explanation": "日本語で解説（文法ポイントを2-3文で）"
@@ -675,9 +677,10 @@ Return JSON only:
     {{
       "subject": "{subject}",
       "field": "{q['field']}",
-      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3  d. 選択肢4  e. 選択肢5",
+      "question": "問題文\\na. 選択肢1  b. 選択肢2  c. 選択肢3",
+      "choices": ["選択肢1", "選択肢2", "選択肢3"],
       "type": "multiple_choice",
-      "answer": "a か b か c か d か e",
+      "answer": "a か b か c",
       "explanation": "解説（2-3文）"
     }}
   ]
@@ -754,6 +757,8 @@ def _clean_latex(text):
         return text
     # JSONパース時に \frac の \f が改頁文字（\x0c）に化けた残骸を復元 ※削除禁止
     text = re.sub(r'\x0c([a-zA-Z]+)', r'\\f\1', text)
+    # JSONパース時に \times 等の \t がタブ文字（\x09）に化けた残骸を復元 ※削除禁止
+    text = re.sub(r'\x09([a-zA-Z]+)', r'\\t\1', text)
     # \frac{a}{b} → (a/b)（1段ネストまで対応）
     brace = r'\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}'
     def _frac(m):
@@ -812,6 +817,20 @@ def _clean_questions(questions):
     return questions
 
 
+def _answer_in_range(q):
+    """答えが選択肢の範囲内かチェックする"""
+    label = (q.get('answer') or 'a').strip().lower()[:1]
+    if label not in 'abcde':
+        return False
+    ans_idx = 'abcde'.index(label)
+    choices = q.get('choices', [])
+    if choices:
+        return ans_idx < len(choices)
+    question = q.get('question', '')
+    choice_count = len(re.findall(r'\b[a-e]\.\s', question))
+    return choice_count == 0 or ans_idx < choice_count
+
+
 def _call_groq(prompt):
     response = client.chat.completions.create(
         model=MODEL,
@@ -825,11 +844,30 @@ def _call_groq(prompt):
     content = re.sub(r'(?<!\\)\\([fFtTbBrR][a-zA-Z]+)', r'\\\\\1', content)
     data = json.loads(content)
     questions = _clean_questions(data.get('questions', []))
-    # 選択肢が埋め込まれていない問題はスキップ
-    valid = [q for q in questions if _has_choices(q.get('question', ''))]
+    # 選択肢なし・答えが範囲外の問題はスキップ
+    valid = [q for q in questions if _has_choices(q.get('question', '')) and _answer_in_range(q)]
     dropped = len(questions) - len(valid)
     if dropped:
-        logger.warning(f'選択肢なし問題を{dropped}問スキップ')
+        logger.warning(f'不正問題を{dropped}問スキップ')
+    return valid
+
+
+def _call_groq_retry(prompt):
+    """再挑戦問題用のGroq呼び出し（choicesフィールドも受け入れる）"""
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{'role': 'user', 'content': prompt}],
+        response_format={'type': 'json_object'},
+        temperature=0.7,
+        max_tokens=3000
+    )
+    content = response.choices[0].message.content
+    content = re.sub(r'(?<!\\)\\([fFtTbBrR][a-zA-Z]+)', r'\\\\\1', content)
+    data = json.loads(content)
+    questions = _clean_questions(data.get('questions', []))
+    valid = [q for q in questions
+             if (_has_choices(q.get('question', '')) or q.get('choices'))
+             and _answer_in_range(q)]
     return valid
 
 
