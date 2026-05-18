@@ -222,7 +222,9 @@ function submitAll(){{
     if(ok){{const rb=document.getElementById(`rbtns-${{i}}`);if(rb)rb.style.display='none';}}
   }});
   const sc=document.getElementById('scorecard');
-  sc.innerHTML=`<div class="score-num">${{cor}}<span style="font-size:.5em;color:#666"> / ${{QS.length}}</span></div><div class="score-sub">正解率 ${{Math.round(cor/QS.length*100)}}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
+  const isPerfect=cor===QS.length;
+  const topMsg=isPerfect?'🎉 全問正解！':'✅ 回答完了！';
+  sc.innerHTML=`<div style="font-size:1.4em;font-weight:700;color:#2e7d32;margin-bottom:8px">${{topMsg}}</div><div class="score-num">${{cor}}<span style="font-size:.5em;color:#666"> / ${{QS.length}}</span></div><div class="score-sub">正解率 ${{Math.round(cor/QS.length*100)}}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
   sc.style.display='block';
   document.getElementById('subwrap').style.display='none';
   sc.scrollIntoView({{behavior:'smooth'}});

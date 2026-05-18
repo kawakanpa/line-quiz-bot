@@ -163,7 +163,8 @@ def _generate_math_from_special_pages(grade, page_numbers, difficulty, count):
         return []
 
     questions = []
-    for page_num in page_numbers[:count]:
+    pages_to_try = random.sample(page_numbers, min(count, len(page_numbers)))
+    for page_num in pages_to_try:
         page_text = get_section_end_text(grade, page_num)
         if not page_text:
             continue
@@ -444,7 +445,10 @@ def generate_daily_questions(subjects_today, settings):
                 q.setdefault('subject', subject)
                 q['type'] = 'multiple_choice'
             all_questions.extend(questions)
-            logger.info(f'{subject}: {len(questions)}問生成')
+            if len(questions) == 0 and count > 0:
+                logger.warning(f'{subject}: 0問しか生成できませんでした（予定: {count}問）')
+            else:
+                logger.info(f'{subject}: {len(questions)}問生成')
         except Exception as e:
             logger.error(f'{subject}問題生成エラー: {e}')
 
@@ -855,44 +859,60 @@ def _answer_in_range(q):
     return choice_count == 0 or ans_idx < choice_count
 
 
-def _call_groq(prompt):
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[{'role': 'user', 'content': prompt}],
-        response_format={'type': 'json_object'},
-        temperature=0.7,
-        max_tokens=3000
-    )
-    content = response.choices[0].message.content
-    # \frac 等が JSON の \f（改頁）として誤解釈され LINE に "rac" と表示されるのを防ぐ ※削除禁止
-    content = re.sub(r'(?<!\\)\\([fFtTbBrR][a-zA-Z]+)', r'\\\\\1', content)
-    data = json.loads(content)
-    questions = _clean_questions(data.get('questions', []))
-    # 選択肢なし・答えが範囲外の問題はスキップ
-    valid = [q for q in questions if _has_choices(q.get('question', '')) and _answer_in_range(q)]
-    dropped = len(questions) - len(valid)
-    if dropped:
-        logger.warning(f'不正問題を{dropped}問スキップ')
-    return valid
+def _call_groq(prompt, _attempt=0):
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{'role': 'user', 'content': prompt}],
+            response_format={'type': 'json_object'},
+            temperature=0.7,
+            max_tokens=3000
+        )
+        content = response.choices[0].message.content
+        # \frac 等が JSON の \f（改頁）として誤解釈され LINE に "rac" と表示されるのを防ぐ ※削除禁止
+        content = re.sub(r'(?<!\\)\\([fFtTbBrR][a-zA-Z]+)', r'\\\\\1', content)
+        data = json.loads(content)
+        questions = _clean_questions(data.get('questions', []))
+        # 選択肢なし・答えが範囲外の問題はスキップ
+        valid = [q for q in questions if _has_choices(q.get('question', '')) and _answer_in_range(q)]
+        dropped = len(questions) - len(valid)
+        if dropped:
+            logger.warning(f'不正問題を{dropped}問スキップ')
+        return valid
+    except Exception as e:
+        if _attempt < 2 and ('429' in str(e) or 'rate_limit' in str(e).lower()):
+            wait = 60 * (_attempt + 1)
+            logger.warning(f'Groqレート制限、{wait}秒後にリトライ ({_attempt + 1}/2): {e}')
+            time.sleep(wait)
+            return _call_groq(prompt, _attempt + 1)
+        raise
 
 
-def _call_groq_retry(prompt):
+def _call_groq_retry(prompt, _attempt=0):
     """再挑戦問題用のGroq呼び出し（choicesフィールドも受け入れる）"""
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[{'role': 'user', 'content': prompt}],
-        response_format={'type': 'json_object'},
-        temperature=0.7,
-        max_tokens=3000
-    )
-    content = response.choices[0].message.content
-    content = re.sub(r'(?<!\\)\\([fFtTbBrR][a-zA-Z]+)', r'\\\\\1', content)
-    data = json.loads(content)
-    questions = _clean_questions(data.get('questions', []))
-    valid = [q for q in questions
-             if (_has_choices(q.get('question', '')) or q.get('choices'))
-             and _answer_in_range(q)]
-    return valid
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{'role': 'user', 'content': prompt}],
+            response_format={'type': 'json_object'},
+            temperature=0.7,
+            max_tokens=3000
+        )
+        content = response.choices[0].message.content
+        content = re.sub(r'(?<!\\)\\([fFtTbBrR][a-zA-Z]+)', r'\\\\\1', content)
+        data = json.loads(content)
+        questions = _clean_questions(data.get('questions', []))
+        valid = [q for q in questions
+                 if (_has_choices(q.get('question', '')) or q.get('choices'))
+                 and _answer_in_range(q)]
+        return valid
+    except Exception as e:
+        if _attempt < 2 and ('429' in str(e) or 'rate_limit' in str(e).lower()):
+            wait = 60 * (_attempt + 1)
+            logger.warning(f'Groqレート制限（retry）、{wait}秒後にリトライ ({_attempt + 1}/2): {e}')
+            time.sleep(wait)
+            return _call_groq_retry(prompt, _attempt + 1)
+        raise
 
 
 def format_question_message(questions, weekday):
