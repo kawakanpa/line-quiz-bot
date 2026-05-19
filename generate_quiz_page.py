@@ -25,11 +25,16 @@ def _parse_choices(question_text):
     """問題文から(本文, 選択肢リスト)を返す"""
     if not question_text:
         return '', []
-    sep = re.search(r'(\n\s*a\.|\s+a\.(?=\s))', question_text)
+    # 「。a.」「。　a.」「\na.」「 a.」などの選択肢開始を検出
+    sep = re.search(r'(\n\s*a\.|[。．]\s*a\.|\s+a\.(?=\s))', question_text)
     if not sep:
         return question_text.strip(), []
-    main_q = question_text[:sep.start()].strip()
-    choice_text = question_text[sep.start():].strip()
+    # sep内の「a.」開始位置から分割（日本語句点は本文側に残す）
+    g = sep.group()
+    a_offset = g.index('a.')
+    split_pos = sep.start() + a_offset
+    main_q = question_text[:split_pos].strip()
+    choice_text = question_text[split_pos:].strip()
     choices = []
     for m in re.finditer(r'\b([a-e])\.\s+(.+?)(?=\s+[a-e]\.\s|\s+[a-e]\.$|$)', choice_text):
         choices.append(m.group(2).strip())

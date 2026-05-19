@@ -880,10 +880,9 @@ def _call_groq(prompt, _attempt=0):
             logger.warning(f'不正問題を{dropped}問スキップ')
         return valid
     except Exception as e:
-        if _attempt < 2 and ('429' in str(e) or 'rate_limit' in str(e).lower()):
-            wait = 60 * (_attempt + 1)
-            logger.warning(f'Groqレート制限、{wait}秒後にリトライ ({_attempt + 1}/2): {e}')
-            time.sleep(wait)
+        if _attempt < 1 and ('429' in str(e) or 'rate_limit' in str(e).lower()):
+            logger.warning(f'Groqレート制限、30秒後にリトライ: {e}')
+            time.sleep(30)
             return _call_groq(prompt, _attempt + 1)
         raise
 
@@ -907,10 +906,9 @@ def _call_groq_retry(prompt, _attempt=0):
                  and _answer_in_range(q)]
         return valid
     except Exception as e:
-        if _attempt < 2 and ('429' in str(e) or 'rate_limit' in str(e).lower()):
-            wait = 60 * (_attempt + 1)
-            logger.warning(f'Groqレート制限（retry）、{wait}秒後にリトライ ({_attempt + 1}/2): {e}')
-            time.sleep(wait)
+        if _attempt < 1 and ('429' in str(e) or 'rate_limit' in str(e).lower()):
+            logger.warning(f'Groqレート制限（retry）、30秒後にリトライ: {e}')
+            time.sleep(30)
             return _call_groq_retry(prompt, _attempt + 1)
         raise
 
