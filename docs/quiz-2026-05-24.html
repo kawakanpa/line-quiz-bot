@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>クイズ 2026年5月24日(日)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f0f4f8;color:#333;padding:12px;font-size:15px}
+.hdr{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:18px 16px;border-radius:14px;margin-bottom:16px;text-align:center;box-shadow:0 4px 12px rgba(46,125,50,.3)}
+.hdr h1{font-size:1.3em;margin-bottom:6px}
+.hdr p{font-size:.85em;opacity:.9}
+.score-card{display:none;background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.score-num{font-size:3em;font-weight:700;color:#2e7d32;line-height:1}
+.score-sub{color:#666;margin-top:6px;font-size:.9em}
+.qcard{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.qcard.ok{border-left:5px solid #43a047}
+.qcard.ng{border-left:5px solid #e53935}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qnum{font-weight:700;color:#2e7d32;font-size:1.05em}
+.tag{background:#e8f5e9;color:#1b5e20;padding:3px 10px;border-radius:20px;font-size:.78em}
+.qtext{line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.clabel{display:flex;align-items:flex-start;padding:10px 12px;border:2px solid #e0e0e0;border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;line-height:1.5}
+.clabel:hover{border-color:#43a047}
+.clabel input{margin-top:2px;margin-right:10px;flex-shrink:0}
+.hl-ok{background:#e8f5e9!important;border-color:#43a047!important}
+.hl-ng{background:#ffebee!important;border-color:#e53935!important}
+.resarea{display:none;margin-top:12px}
+.badge-ok{display:inline-block;background:#43a047;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.badge-ng{display:inline-block;background:#e53935;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.expl{background:#f9f9f9;border-left:4px solid #43a047;padding:10px 12px;border-radius:6px;font-size:.88em;line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.rbtns{display:flex;gap:8px}
+.btn{padding:10px 0;border:none;border-radius:10px;font-size:.9em;font-weight:700;cursor:pointer;flex:1;text-align:center}
+.btn-ok{background:#43a047;color:#fff}
+.btn-retry{background:#f4511e;color:#fff}
+.retrybox{display:none;background:#fff8e1;border:2px solid #ffb300;border-radius:12px;padding:14px;margin-top:12px}
+.retrybox h4{color:#e65100;margin-bottom:10px;font-size:.95em}
+.btn-confirm{display:block;width:100%;padding:11px;background:#1976d2;color:#fff;border:none;border-radius:10px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:10px}
+.rresult{display:none;margin-top:10px}
+.subwrap{text-align:center;padding:10px 0 24px}
+.btn-submit{background:#1976d2;color:#fff;padding:15px 48px;font-size:1.1em;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 12px rgba(25,118,210,.35)}
+.ok-msg{color:#43a047;font-weight:700;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>📚 今日のクイズ</h1>
+  <p>2026年5月24日(日) ／ 理科・英語 ／ 全49問</p>
+</div>
+<div id="scorecard" class="score-card"></div>
+<div id="qlist"></div>
+<div class="subwrap" id="subwrap">
+  <button class="btn-submit" onclick="submitAll()">答えを提出する</button>
+</div>
+<script>
+const QS=[{"subject": "理科", "field": "電気", "question": "電流1Aの抵抗が2Ωの導線に流れる電圧は何Vか。", "choices": ["1V", "2V", "3V", "4V", "5V"], "answer_index": 1, "explanation": "オームの法則によれば、電圧は電流と抵抗の積に等しい。V=IRなので、V=1A*2Ω=2V", "retry": {"question": "電流1Aの抵抗が2Ωの導線に流れる電圧は何Vか。", "choices": ["1V", "2V", "3V", "4V", "5V"], "answer_index": 1, "explanation": "オームの法則によれば、電圧は電流と抵抗の積に等しい。V=IRなので、V=1A*2Ω=2V"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が2kg、体積が0.5m³の場合、その密度はどれか。", "choices": ["1kg/m³", "2kg/m³", "4kg/m³", "6kg/m³", "8kg/m³"], "answer_index": 2, "explanation": "密度は質量と体積の比で求められる。ρ=m/Vなので、ρ=2kg/0.5m³=4kg/m³", "retry": {"question": "物体の質量が2kg、体積が0.5m³の場合、その密度はどれか。", "choices": ["1kg/m³", "2kg/m³", "4kg/m³", "6kg/m³", "8kg/m³"], "answer_index": 2, "explanation": "密度は質量と体積の比で求められる。ρ=m/Vなので、ρ=2kg/0.5m³=4kg/m³"}}, {"subject": "理科", "field": "物理", "question": "物体が5m/sの速度で10秒間移動した場合、その距離はどれか。", "choices": ["20m", "30m", "40m", "50m", "60m"], "answer_index": 3, "explanation": "距離は速度と時間の積で求められる。d=v*tなので、d=5m/s*10s=50m", "retry": {"question": "物体が5m/sの速度で10秒間移動した場合、その距離はどれか。", "choices": ["20m", "30m", "40m", "50m", "60m"], "answer_index": 3, "explanation": "距離は速度と時間の積で求められる。d=v*tなので、d=5m/s*10s=50m"}}, {"subject": "理科", "field": "化学", "question": "水の密度が1g/cm³の場合、1Lの水の重さはどれか。", "choices": ["0.5kg", "1kg", "1.5kg", "2kg", "3kg"], "answer_index": 1, "explanation": "1Lは1000cm³に等しい。密度は1g/cm³なので、重さは1000g=1kg", "retry": {"question": "水の密度が1g/cm³の場合、1Lの水の重さはどれか。", "choices": ["0.5kg", "1kg", "1.5kg", "2kg", "3kg"], "answer_index": 1, "explanation": "1Lは1000cm³に等しい。密度は1g/cm³なので、重さは1000g=1kg"}}, {"subject": "理科", "field": "物理", "question": "物体の圧力が100Pa、面積が0.1m²の場合、その力はどれか。", "choices": ["1N", "5N", "10N", "20N", "50N"], "answer_index": 2, "explanation": "圧力は力と面積の比で求められる。P=F/Aなので、F=P*A=100Pa*0.1m²=10N", "retry": {"question": "物体の圧力が100Pa、面積が0.1m²の場合、その力はどれか。", "choices": ["1N", "5N", "10N", "20N", "50N"], "answer_index": 2, "explanation": "圧力は力と面積の比で求められる。P=F/Aなので、F=P*A=100Pa*0.1m²=10N"}}, {"subject": "理科", "field": "物理", "question": "物体が3m/s²の加速度で5秒間移動した場合、その速度はどれか。", "choices": ["10m/s", "12m/s", "15m/s", "18m/s", "20m/s"], "answer_index": 2, "explanation": "速度は加速度と時間の積で求められる。v=a*tなので、v=3m/s²*5s=15m/s", "retry": {"question": "物体が3m/s²の加速度で5秒間移動した場合、その速度はどれか。", "choices": ["10m/s", "12m/s", "15m/s", "18m/s", "20m/s"], "answer_index": 2, "explanation": "速度は加速度と時間の積で求められる。v=a*tなので、v=3m/s²*5s=15m/s"}}, {"subject": "理科", "field": "化学", "question": "NaOHとHClが反応するとき、生成される塩はどれか。", "choices": ["NaCl", "KCl", "CaCl", "MgCl", "AlCl"], "answer_index": 0, "explanation": "NaOHとHClが反応すると、NaClとH₂Oが生成される。NaOH+HCl→NaCl+H₂O", "retry": {"question": "NaOHとHClが反応するとき、生成される塩はどれか。", "choices": ["NaCl", "KCl", "CaCl", "MgCl", "AlCl"], "answer_index": 0, "explanation": "NaOHとHClが反応すると、NaClとH₂Oが生成される。NaOH+HCl→NaCl+H₂O"}}, {"subject": "理科", "field": "物理", "question": "物体の速度が15m/s、時間が3秒の場合、その距離はどれか。", "choices": ["30m", "40m", "45m", "50m", "60m"], "answer_index": 2, "explanation": "距離は速度と時間の積で求められる。d=v*tなので、d=15m/s*3s=45m", "retry": {"question": "物体の速度が15m/s、時間が3秒の場合、その距離はどれか。", "choices": ["30m", "40m", "45m", "50m", "60m"], "answer_index": 2, "explanation": "距離は速度と時間の積で求められる。d=v*tなので、d=15m/s*3s=45m"}}, {"subject": "理科", "field": "化学", "question": "H₂Oの分子式の意味はどれか。", "choices": ["1個の水素原子と1個の酸素原子", "2個の水素原子と1個の酸素原子", "1個の水素原子と2個の酸素原子", "2個の水素原子と2個の酸素原子", "3個の水素原子と1個の酸素原子"], "answer_index": 1, "explanation": "H₂Oの分子式は、2個の水素原子と1個の酸素原子で構成されることを示している。", "retry": {"question": "H₂Oの分子式の意味はどれか。", "choices": ["1個の水素原子と1個の酸素原子", "2個の水素原子と1個の酸素原子", "1個の水素原子と2個の酸素原子", "2個の水素原子と2個の酸素原子", "3個の水素原子と1個の酸素原子"], "answer_index": 1, "explanation": "H₂Oの分子式は、2個の水素原子と1個の酸素原子で構成されることを示している。"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が5kg、加速度が2m/s²の場合、その力はどれか。", "choices": ["5N", "10N", "15N", "20N", "25N"], "answer_index": 1, "explanation": "力は質量と加速度の積で求められる。F=m*aなので、F=5kg*2m/s²=10N", "retry": {"question": "物体の質量が5kg、加速度が2m/s²の場合、その力はどれか。", "choices": ["5N", "10N", "15N", "20N", "25N"], "answer_index": 1, "explanation": "力は質量と加速度の積で求められる。F=m*aなので、F=5kg*2m/s²=10N"}}, {"subject": "理科", "field": "化学", "question": "CO₂の分子式の意味はどれか。", "choices": ["1個の炭素原子と1個の酸素原子", "1個の炭素原子と2個の酸素原子", "2個の炭素原子と1個の酸素原子", "2個の炭素原子と2個の酸素原子", "3個の炭素原子と1個の酸素原子"], "answer_index": 1, "explanation": "CO₂の分子式は、1個の炭素原子と2個の酸素原子で構成されることを示している。", "retry": {"question": "CO₂の分子式の意味はどれか。", "choices": ["1個の炭素原子と1個の酸素原子", "1個の炭素原子と2個の酸素原子", "2個の炭素原子と1個の酸素原子", "2個の炭素原子と2個の酸素原子", "3個の炭素原子と1個の酸素原子"], "answer_index": 1, "explanation": "CO₂の分子式は、1個の炭素原子と2個の酸素原子で構成されることを示している。"}}, {"subject": "理科", "field": "物理", "question": "物体の速度が20m/s、距離が40mの場合、その時間はどれか。", "choices": ["1s", "2s", "3s", "4s", "5s"], "answer_index": 1, "explanation": "時間は距離と速度の比で求められる。t=d/vなので、t=40m/20m/s=2s", "retry": {"question": "物体の速度が20m/s、距離が40mの場合、その時間はどれか。", "choices": ["1s", "2s", "3s", "4s", "5s"], "answer_index": 1, "explanation": "時間は距離と速度の比で求められる。t=d/vなので、t=40m/20m/s=2s"}}, {"subject": "理科", "field": "化学", "question": "H₂とO₂が反応するとき、生成される物質はどれか。", "choices": ["H₂O", "CO₂", "HCl", "NaCl", "CaO"], "answer_index": 0, "explanation": "H₂とO₂が反応すると、H₂Oが生成される。2H₂+O₂→2H₂O", "retry": {"question": "H₂とO₂が反応するとき、生成される物質はどれか。", "choices": ["H₂O", "CO₂", "HCl", "NaCl", "CaO"], "answer_index": 0, "explanation": "H₂とO₂が反応すると、H₂Oが生成される。2H₂+O₂→2H₂O"}}, {"subject": "理科", "field": "物理", "question": "物体の加速度が4m/s²、時間が2秒の場合、その速度はどれか。", "choices": ["4m/s", "6m/s", "8m/s", "10m/s", "12m/s"], "answer_index": 2, "explanation": "速度は加速度と時間の積で求められる。v=a*tなので、v=4m/s²*2s=8m/s", "retry": {"question": "物体の加速度が4m/s²、時間が2秒の場合、その速度はどれか。", "choices": ["4m/s", "6m/s", "8m/s", "10m/s", "12m/s"], "answer_index": 2, "explanation": "速度は加速度と時間の積で求められる。v=a*tなので、v=4m/s²*2s=8m/s"}}, {"subject": "理科", "field": "化学", "question": "NaとCl₂が反応するとき、生成される塩はどれか。", "choices": ["NaCl", "KCl", "CaCl", "MgCl", "AlCl"], "answer_index": 0, "explanation": "NaとCl₂が反応すると、NaClが生成される。2Na+Cl₂→2NaCl", "retry": {"question": "NaとCl₂が反応するとき、生成される塩はどれか。", "choices": ["NaCl", "KCl", "CaCl", "MgCl", "AlCl"], "answer_index": 0, "explanation": "NaとCl₂が反応すると、NaClが生成される。2Na+Cl₂→2NaCl"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が10kg、力が20Nの場合、その加速度はどれか。", "choices": ["1m/s²", "2m/s²", "3m/s²", "4m/s²", "5m/s²"], "answer_index": 1, "explanation": "加速度は力と質量の比で求められる。a=F/mなので、a=20N/10kg=2m/s²", "retry": {"question": "物体の質量が10kg、力が20Nの場合、その加速度はどれか。", "choices": ["1m/s²", "2m/s²", "3m/s²", "4m/s²", "5m/s²"], "answer_index": 1, "explanation": "加速度は力と質量の比で求められる。a=F/mなので、a=20N/10kg=2m/s²"}}, {"subject": "理科", "field": "化学", "question": "CaOとH₂Oが反応するとき、生成される物質はどれか。", "choices": ["Ca(OH)₂", "CaCl", "CaCO₃", "CaSO₄", "Ca(NO₃)₂"], "answer_index": 0, "explanation": "CaOとH₂Oが反応すると、Ca(OH)₂が生成される。CaO+H₂O→Ca(OH)₂", "retry": {"question": "CaOとH₂Oが反応するとき、生成される物質はどれか。", "choices": ["Ca(OH)₂", "CaCl", "CaCO₃", "CaSO₄", "Ca(NO₃)₂"], "answer_index": 0, "explanation": "CaOとH₂Oが反応すると、Ca(OH)₂が生成される。CaO+H₂O→Ca(OH)₂"}}, {"subject": "理科", "field": "物理", "question": "物体の距離が30m、時間が5秒の場合、その速度はどれか。", "choices": ["4m/s", "5m/s", "6m/s", "8m/s", "10m/s"], "answer_index": 1, "explanation": "速度は距離と時間の比で求められる。v=d/tなので、v=30m/5s=6m/s", "retry": {"question": "物体の距離が30m、時間が5秒の場合、その速度はどれか。", "choices": ["4m/s", "5m/s", "6m/s", "8m/s", "10m/s"], "answer_index": 1, "explanation": "速度は距離と時間の比で求められる。v=d/tなので、v=30m/5s=6m/s"}}, {"subject": "理科", "field": "化学", "question": "CuとO₂が反応するとき、生成される化合物はどれか。", "choices": ["CuO", "CuCl", "CuSO₄", "Cu(NO₃)₂", "CuCO₃"], "answer_index": 0, "explanation": "CuとO₂が反応すると、CuOが生成される。2Cu+O₂→2CuO", "retry": {"question": "CuとO₂が反応するとき、生成される化合物はどれか。", "choices": ["CuO", "CuCl", "CuSO₄", "Cu(NO₃)₂", "CuCO₃"], "answer_index": 0, "explanation": "CuとO₂が反応すると、CuOが生成される。2Cu+O₂→2CuO"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が15kg、加速度が3m/s²の場合、その力はどれか。", "choices": ["30N", "40N", "45N", "50N", "60N"], "answer_index": 2, "explanation": "力は質量と加速度の積で求められる。F=m*aなので、F=15kg*3m/s²=45N", "retry": {"question": "物体の質量が15kg、加速度が3m/s²の場合、その力はどれか。", "choices": ["30N", "40N", "45N", "50N", "60N"], "answer_index": 2, "explanation": "力は質量と加速度の積で求められる。F=m*aなので、F=15kg*3m/s²=45N"}}, {"subject": "理科", "field": "化学", "question": "ZnとHClが反応するとき、生成される塩はどれか。", "choices": ["ZnCl", "ZnCl₂", "ZnSO₄", "Zn(NO₃)₂", "ZnCO₃"], "answer_index": 1, "explanation": "ZnとHClが反応すると、ZnCl₂が生成される。Zn+2HCl→ZnCl₂+H₂", "retry": {"question": "ZnとHClが反応するとき、生成される塩はどれか。", "choices": ["ZnCl", "ZnCl₂", "ZnSO₄", "Zn(NO₃)₂", "ZnCO₃"], "answer_index": 1, "explanation": "ZnとHClが反応すると、ZnCl₂が生成される。Zn+2HCl→ZnCl₂+H₂"}}, {"subject": "理科", "field": "物理", "question": "物体の速度が25m/s、時間が4秒の場合、その距離はどれか。", "choices": ["80m", "90m", "100m", "110m", "120m"], "answer_index": 2, "explanation": "距離は速度と時間の積で求められる。d=v*tなので、d=25m/s*4s=100m", "retry": {"question": "物体の速度が25m/s、時間が4秒の場合、その距離はどれか。", "choices": ["80m", "90m", "100m", "110m", "120m"], "answer_index": 2, "explanation": "距離は速度と時間の積で求められる。d=v*tなので、d=25m/s*4s=100m"}}, {"subject": "理科", "field": "化学", "question": "AlとO₂が反応するとき、生成される化合物はどれか。", "choices": ["AlO", "Al₂O", "Al₂O₃", "Al(OH)₃", "AlCl₃"], "answer_index": 2, "explanation": "AlとO₂が反応すると、Al₂O₃が生成される。4Al+3O₂→2Al₂O₃", "retry": {"question": "AlとO₂が反応するとき、生成される化合物はどれか。", "choices": ["AlO", "Al₂O", "Al₂O₃", "Al(OH)₃", "AlCl₃"], "answer_index": 2, "explanation": "AlとO₂が反応すると、Al₂O₃が生成される。4Al+3O₂→2Al₂O₃"}}, {"subject": "英語", "field": "比較級", "question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は形容詞の前に「more」または「-er」を付ける。", "retry": {"question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は形容詞の前に「more」または「-er」を付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は動詞の前に「to」を付ける。", "retry": {"question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は動詞の前に「to」を付ける。"}}, {"subject": "英語", "field": "受動態", "question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "受動態は動詞の過去分詞形を使用する。", "retry": {"question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "受動態は動詞の過去分詞形を使用する。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は主語が単数の場合「is」を使用する。", "retry": {"question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は主語が単数の場合「is」を使用する。"}}, {"subject": "英語", "field": "比較級", "question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は形容詞の前に「more」を付ける。", "retry": {"question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は形容詞の前に「more」を付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listener"], "answer_index": 1, "explanation": "不定詞は動詞の原形の前に「to」を付けるが、ここでは動名詞「listening」を使用する。", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listener"], "answer_index": 1, "explanation": "不定詞は動詞の原形の前に「to」を付けるが、ここでは動名詞「listening」を使用する。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try it.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞「should」は勧めを表す。", "retry": {"question": "You ( ) try it.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞「should」は勧めを表す。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by many people.", "choices": ["is watched", "watch", "watches", "watching", "was watched"], "answer_index": 0, "explanation": "受動態は動詞の現在分詞形または過去分詞形を使用する。", "retry": {"question": "The play ( ) by many people.", "choices": ["is watched", "watch", "watches", "watching", "was watched"], "answer_index": 0, "explanation": "受動態は動詞の現在分詞形または過去分詞形を使用する。"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) from America.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "be動詞は主語が複数の場合「are」を使用する。", "retry": {"question": "They ( ) from America.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "be動詞は主語が複数の場合「are」を使用する。"}}, {"subject": "英語", "field": "比較級", "question": "This book is ( ) than the one I read last week.", "choices": ["interesting", "more interesting", "most interesting", "interestingly", "interested"], "answer_index": 1, "explanation": "比較級は形容詞の前に「more」を付ける。", "retry": {"question": "This book is ( ) than the one I read last week.", "choices": ["interesting", "more interesting", "most interesting", "interestingly", "interested"], "answer_index": 1, "explanation": "比較級は形容詞の前に「more」を付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to travel.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は動詞の前に「to」を付ける。", "retry": {"question": "I want ( ) to travel.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は動詞の前に「to」を付ける。"}}, {"subject": "英語", "field": "受動態", "question": "The flowers ( ) every day.", "choices": ["water", "waters", "watering", "watered", "are watered"], "answer_index": 4, "explanation": "受動態は動詞の現在分詞形または過去分詞形を使用する。", "retry": {"question": "The flowers ( ) every day.", "choices": ["water", "waters", "watering", "watered", "are watered"], "answer_index": 4, "explanation": "受動態は動詞の現在分詞形または過去分詞形を使用する。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English fluently.", "choices": ["can", "should", "will", "must", "may"], "answer_index": 0, "explanation": "助動詞「can」は能力を表す。", "retry": {"question": "You ( ) speak English fluently.", "choices": ["can", "should", "will", "must", "may"], "answer_index": 0, "explanation": "助動詞「can」は能力を表す。"}}, {"subject": "英語", "field": "be動詞", "question": "I ( ) a teacher.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 0, "explanation": "be動詞は主語が単数の場合「am」を使用する。", "retry": {"question": "I ( ) a teacher.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 0, "explanation": "be動詞は主語が単数の場合「am」を使用する。"}}, {"subject": "英語", "field": "比較級", "question": "This city is ( ) than Tokyo.", "choices": ["big", "bigger", "biggest", "more big", "most big"], "answer_index": 1, "explanation": "比較級は形容詞の前に「-er」を付ける。", "retry": {"question": "This city is ( ) than Tokyo.", "choices": ["big", "bigger", "biggest", "more big", "most big"], "answer_index": 1, "explanation": "比較級は形容詞の前に「-er」を付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) movies.", "choices": ["to watch", "watching", "watch", "watched", "watcher"], "answer_index": 1, "explanation": "不定詞は動詞の原形の前に「to」を付けるが、ここでは動名詞「watching」を使用する。", "retry": {"question": "I love ( ) movies.", "choices": ["to watch", "watching", "watch", "watched", "watcher"], "answer_index": 1, "explanation": "不定詞は動詞の原形の前に「to」を付けるが、ここでは動名詞「watching」を使用する。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by Shakespeare.", "choices": ["writes", "wrote", "writing", "written", "was written"], "answer_index": 4, "explanation": "受動態は動詞の過去分詞形を使用する。", "retry": {"question": "The play ( ) by Shakespeare.", "choices": ["writes", "wrote", "writing", "written", "was written"], "answer_index": 4, "explanation": "受動態は動詞の過去分詞形を使用する。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try harder.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞「should」は勧めを表す。", "retry": {"question": "You ( ) try harder.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞「should」は勧めを表す。"}}, {"subject": "英語", "field": "be動詞", "question": "We ( ) friends.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "be動詞は主語が複数の場合「are」を使用する。", "retry": {"question": "We ( ) friends.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "be動詞は主語が複数の場合「are」を使用する。"}}, {"subject": "英語", "field": "比較級", "question": "This car is ( ) than the one I have.", "choices": ["fast", "faster", "fastest", "more fast", "most fast"], "answer_index": 1, "explanation": "比較級は形容詞の前に「-er」を付ける。", "retry": {"question": "This car is ( ) than the one I have.", "choices": ["fast", "faster", "fastest", "more fast", "most fast"], "answer_index": 1, "explanation": "比較級は形容詞の前に「-er」を付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to learn English.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は動詞の前に「to」を付ける。", "retry": {"question": "I want ( ) to learn English.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は動詞の前に「to」を付ける。"}}, {"subject": "英語", "field": "受動態", "question": "The flowers ( ) every morning.", "choices": ["water", "waters", "watering", "watered", "are watered"], "answer_index": 4, "explanation": "受動態は動詞の現在分詞形または過去分詞形を使用する。", "retry": {"question": "The flowers ( ) every morning.", "choices": ["water", "waters", "watering", "watered", "are watered"], "answer_index": 4, "explanation": "受動態は動詞の現在分詞形または過去分詞形を使用する。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English fluently if you practice every day.", "choices": ["can", "should", "will", "must", "may"], "answer_index": 2, "explanation": "助動詞「will」は将来の予定を表す。", "retry": {"question": "You ( ) speak English fluently if you practice every day.", "choices": ["can", "should", "will", "must", "may"], "answer_index": 2, "explanation": "助動詞「will」は将来の予定を表す。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a doctor.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は主語が単数の場合「is」を使用する。", "retry": {"question": "He ( ) a doctor.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は主語が単数の場合「is」を使用する。"}}, {"subject": "英語", "field": "比較級", "question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は形容詞の前に「more」を付ける。", "retry": {"question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は形容詞の前に「more」を付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listener"], "answer_index": 1, "explanation": "不定詞は動詞の原形の前に「to」を付けるが、ここでは動名詞「listening」を使用する。", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listener"], "answer_index": 1, "explanation": "不定詞は動詞の原形の前に「to」を付けるが、ここでは動名詞「listening」を使用する。"}}];
+const LC=['a','b','c','d','e'];
+const NOTIFY_URL='https://script.google.com/macros/s/AKfycbyOa4De8zupkRe0tXU3lz18tWkPG4jg2HdVgUhFC_BnYrUDPqlvKCAS4Y4ccfEj8KWi/exec';
+const NOTIFY_SECRET='yuukeibotquiz2026';
+const DATE_STR='2026年5月24日(日)';
+const QUIZ_URL='https://kawakanpa.github.io/line-quiz-bot/quiz-2026-05-24.html';
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function init(){
+  let h='';
+  QS.forEach((q,i)=>{
+    const ch=q.choices.map((c,ci)=>`<label class="clabel" id="lbl-${i}-${ci}"><input type="radio" name="q${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    const rq=q.retry;
+    const rch=rq.choices.map((c,ci)=>`<label class="clabel" id="rlbl-${i}-${ci}"><input type="radio" name="rq${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    h+=`<div class="qcard" id="card-${i}">
+<div class="qhead"><span class="qnum">問${i+1}</span><span class="tag">${esc(q.subject)} / ${esc(q.field)}</span></div>
+<div class="qtext">${esc(q.question)}</div>
+<div id="ch-${i}">${ch}</div>
+<div class="resarea" id="res-${i}">
+  <div id="bdg-${i}"></div>
+  <div class="expl">${esc(q.explanation)}</div>
+  <div class="rbtns" id="rbtns-${i}">
+    <button class="btn btn-retry" onclick="showRetry(${i})">わかった！練習問題を解く 🔄</button>
+  </div>
+</div>
+<div class="retrybox" id="retry-${i}">
+  <h4>🔄 もう一度チャレンジ！</h4>
+  <div class="qtext">${esc(rq.question)}</div>
+  <div id="rch-${i}">${rch}</div>
+  <button class="btn-confirm" id="rcbtn-${i}" onclick="submitRetry(${i})">確認する</button>
+  <div class="rresult" id="rres-${i}">
+    <div id="rbdg-${i}"></div>
+    <div class="expl">${esc(rq.explanation)}</div>
+  </div>
+</div>
+</div>`;
+  });
+  document.getElementById('qlist').innerHTML=h;
+}
+function submitAll(){
+  const missing=QS.reduce((a,_,i)=>{if(!document.querySelector(`input[name="q${i}"]:checked`))a.push(i+1);return a;},[]);
+  if(missing.length){alert(`問${missing.join('、')}がまだ答えていません！`);return;}
+  let cor=0;
+  const resList=[];
+  QS.forEach((q,i)=>{
+    const sv=parseInt(document.querySelector(`input[name="q${i}"]:checked`).value);
+    const ok=sv===q.answer_index;
+    if(ok)cor++;
+    resList.push({num:i+1,subject:q.subject,field:q.field,correct:ok});
+    document.querySelectorAll(`#ch-${i} .clabel`).forEach((l,li)=>{
+      if(li===q.answer_index)l.classList.add('hl-ok');
+      else if(li===sv&&!ok)l.classList.add('hl-ng');
+    });
+    document.querySelectorAll(`input[name="q${i}"]`).forEach(r=>r.disabled=true);
+    document.getElementById(`bdg-${i}`).innerHTML=ok?
+      '<span class="badge-ok">✓ 正解！</span>':
+      `<span class="badge-ng">✗ 不正解（正解: ${LC[q.answer_index]}）</span>`;
+    document.getElementById(`res-${i}`).style.display='block';
+    document.getElementById(`card-${i}`).classList.add(ok?'ok':'ng');
+    if(ok){const rb=document.getElementById(`rbtns-${i}`);if(rb)rb.style.display='none';}
+  });
+  const sc=document.getElementById('scorecard');
+  const isPerfect=cor===QS.length;
+  const topMsg=isPerfect?'🎉 全問正解！':'✅ 回答完了！';
+  sc.innerHTML=`<div style="font-size:1.4em;font-weight:700;color:#2e7d32;margin-bottom:8px">${topMsg}</div><div class="score-num">${cor}<span style="font-size:.5em;color:#666"> / ${QS.length}</span></div><div class="score-sub">正解率 ${Math.round(cor/QS.length*100)}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
+  sc.style.display='block';
+  document.getElementById('subwrap').style.display='none';
+  sc.scrollIntoView({behavior:'smooth'});
+  sendResultsNotification(cor,resList);
+}
+function markOk(i){document.getElementById(`rbtns-${i}`).innerHTML='<span class="ok-msg">✓ 理解しました！</span>';}
+function showRetry(i){
+  document.getElementById(`retry-${i}`).style.display='block';
+  document.getElementById(`rbtns-${i}`).style.display='none';
+  document.getElementById(`retry-${i}`).scrollIntoView({behavior:'smooth'});
+}
+function submitRetry(i){
+  const rq=QS[i].retry;
+  const sel=document.querySelector(`input[name="rq${i}"]:checked`);
+  if(!sel){alert('答えを選んでください！');return;}
+  const sv=parseInt(sel.value);
+  const ok=sv===rq.answer_index;
+  document.querySelectorAll(`#rch-${i} .clabel`).forEach((l,li)=>{
+    if(li===rq.answer_index)l.classList.add('hl-ok');
+    else if(li===sv&&!ok)l.classList.add('hl-ng');
+  });
+  document.querySelectorAll(`input[name="rq${i}"]`).forEach(r=>r.disabled=true);
+  document.getElementById(`rbdg-${i}`).innerHTML=ok?
+    '<span class="badge-ok">✓ 正解！よくできました！</span>':
+    `<span class="badge-ng">✗ 不正解（正解: ${LC[rq.answer_index]}）</span>`;
+  document.getElementById(`rres-${i}`).style.display='block';
+  document.getElementById(`rcbtn-${i}`).style.display='none';
+}
+function sendResultsNotification(cor,resList){
+  if(!NOTIFY_URL)return;
+  const payload=JSON.stringify({secret:NOTIFY_SECRET,type:'results',date:DATE_STR,score:cor,total:QS.length,results:resList,quiz_url:QUIZ_URL});
+  fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:payload}).catch(()=>{});
+  if(cor===QS.length){
+    const p=JSON.stringify({secret:NOTIFY_SECRET,type:'perfect',date:DATE_STR,total:QS.length,quiz_url:QUIZ_URL});
+    setTimeout(()=>fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:p}).catch(()=>{}),500);
+  }
+}
+init();
+</script>
+</body>
+</html>
