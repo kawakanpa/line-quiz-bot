@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>クイズ 2026年5月25日(月)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f0f4f8;color:#333;padding:12px;font-size:15px}
+.hdr{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:18px 16px;border-radius:14px;margin-bottom:16px;text-align:center;box-shadow:0 4px 12px rgba(46,125,50,.3)}
+.hdr h1{font-size:1.3em;margin-bottom:6px}
+.hdr p{font-size:.85em;opacity:.9}
+.score-card{display:none;background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.score-num{font-size:3em;font-weight:700;color:#2e7d32;line-height:1}
+.score-sub{color:#666;margin-top:6px;font-size:.9em}
+.qcard{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.qcard.ok{border-left:5px solid #43a047}
+.qcard.ng{border-left:5px solid #e53935}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qnum{font-weight:700;color:#2e7d32;font-size:1.05em}
+.tag{background:#e8f5e9;color:#1b5e20;padding:3px 10px;border-radius:20px;font-size:.78em}
+.qtext{line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.clabel{display:flex;align-items:flex-start;padding:10px 12px;border:2px solid #e0e0e0;border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;line-height:1.5}
+.clabel:hover{border-color:#43a047}
+.clabel input{margin-top:2px;margin-right:10px;flex-shrink:0}
+.hl-ok{background:#e8f5e9!important;border-color:#43a047!important}
+.hl-ng{background:#ffebee!important;border-color:#e53935!important}
+.resarea{display:none;margin-top:12px}
+.badge-ok{display:inline-block;background:#43a047;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.badge-ng{display:inline-block;background:#e53935;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.expl{background:#f9f9f9;border-left:4px solid #43a047;padding:10px 12px;border-radius:6px;font-size:.88em;line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.rbtns{display:flex;gap:8px}
+.btn{padding:10px 0;border:none;border-radius:10px;font-size:.9em;font-weight:700;cursor:pointer;flex:1;text-align:center}
+.btn-ok{background:#43a047;color:#fff}
+.btn-retry{background:#f4511e;color:#fff}
+.retrybox{display:none;background:#fff8e1;border:2px solid #ffb300;border-radius:12px;padding:14px;margin-top:12px}
+.retrybox h4{color:#e65100;margin-bottom:10px;font-size:.95em}
+.btn-confirm{display:block;width:100%;padding:11px;background:#1976d2;color:#fff;border:none;border-radius:10px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:10px}
+.rresult{display:none;margin-top:10px}
+.subwrap{text-align:center;padding:10px 0 24px}
+.btn-submit{background:#1976d2;color:#fff;padding:15px 48px;font-size:1.1em;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 12px rgba(25,118,210,.35)}
+.ok-msg{color:#43a047;font-weight:700;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>📚 今日のクイズ</h1>
+  <p>2026年5月25日(月) ／ 社会・英語 ／ 全47問</p>
+</div>
+<div id="scorecard" class="score-card"></div>
+<div id="qlist"></div>
+<div class="subwrap" id="subwrap">
+  <button class="btn-submit" onclick="submitAll()">答えを提出する</button>
+</div>
+<script>
+const QS=[{"subject": "社会", "field": "歴史", "question": "日本の近代化の象徴とされる人物は誰か", "choices": ["伊藤博文", "西郷隆盛", "大久保利通", "木戸孝允", "福沢諭吉"], "answer_index": 0, "explanation": "伊藤博文は近代日本の政治家で、初代内閣総理大臣として日本の近代化に寄与した。", "retry": {"question": "日本の近代化の象徴とされる人物は誰か", "choices": ["伊藤博文", "西郷隆盛", "大久保利通", "木戸孝允", "福沢諭吉"], "answer_index": 0, "explanation": "伊藤博文は近代日本の政治家で、初代内閣総理大臣として日本の近代化に寄与した。"}}, {"subject": "社会", "field": "地理", "question": "日本の最北端の島はどこか", "choices": ["本州", "北海道", "九州", "沖縄県", "択捉島"], "answer_index": 4, "explanation": "択捉島は北海道の北東にある島で、日本の最北端の島である。", "retry": {"question": "日本の最北端の島はどこか", "choices": ["本州", "北海道", "九州", "沖縄県", "択捉島"], "answer_index": 4, "explanation": "択捉島は北海道の北東にある島で、日本の最北端の島である。"}}, {"subject": "社会", "field": "公民", "question": "日本国憲法の改正手続きはどうなるか", "choices": ["国会で3分の2以上の議員が賛成する", "国会で過半数の議員が賛成する", "国民投票で過半数が賛成する", "内閣が決定する", "最高裁判所が決定する"], "answer_index": 0, "explanation": "日本国憲法の改正手続きは、国会で3分の2以上の議員が賛成する必要がある。", "retry": {"question": "日本国憲法の改正手続きはどうなるか", "choices": ["国会で3分の2以上の議員が賛成する", "国会で過半数の議員が賛成する", "国民投票で過半数が賛成する", "内閣が決定する", "最高裁判所が決定する"], "answer_index": 0, "explanation": "日本国憲法の改正手続きは、国会で3分の2以上の議員が賛成する必要がある。"}}, {"subject": "社会", "field": "歴史", "question": "江戸時代の日本で、徳川幕府が行った鎖国の政策は何と呼ばれるか", "choices": ["鎖国", "開国", "薩摩藩", "長州藩", "水戸藩"], "answer_index": 0, "explanation": "鎖国は、江戸時代の日本で、徳川幕府が行った政策で、外国との交流を制限した。", "retry": {"question": "江戸時代の日本で、徳川幕府が行った鎖国の政策は何と呼ばれるか", "choices": ["鎖国", "開国", "薩摩藩", "長州藩", "水戸藩"], "answer_index": 0, "explanation": "鎖国は、江戸時代の日本で、徳川幕府が行った政策で、外国との交流を制限した。"}}, {"subject": "社会", "field": "地理", "question": "アジア大陸の主要な河川はどれか", "choices": ["アマゾン川", "ナイル川", "ヤンツィ江", "長江", "メコン川"], "answer_index": 2, "explanation": "ヤンツィ江はアジア大陸の主要な河川の一つで、中国を流れる。", "retry": {"question": "アジア大陸の主要な河川はどれか", "choices": ["アマゾン川", "ナイル川", "ヤンツィ江", "長江", "メコン川"], "answer_index": 2, "explanation": "ヤンツィ江はアジア大陸の主要な河川の一つで、中国を流れる。"}}, {"subject": "社会", "field": "公民", "question": "日本の裁判所の最高裁判所の判事の任期はどうなるか", "choices": ["5年", "10年", "15年", "65歳まで", "無期限"], "answer_index": 3, "explanation": "最高裁判所の判事の任期は65歳までである。", "retry": {"question": "日本の裁判所の最高裁判所の判事の任期はどうなるか", "choices": ["5年", "10年", "15年", "65歳まで", "無期限"], "answer_index": 3, "explanation": "最高裁判所の判事の任期は65歳までである。"}}, {"subject": "社会", "field": "歴史", "question": "明治維新の後、廃止された制度は何と呼ばれるか", "choices": ["封建制", "漢学", "武士階級", "侍", "幕府"], "answer_index": 0, "explanation": "明治維新の後、封建制は廃止された。", "retry": {"question": "明治維新の後、廃止された制度は何と呼ばれるか", "choices": ["封建制", "漢学", "武士階級", "侍", "幕府"], "answer_index": 0, "explanation": "明治維新の後、封建制は廃止された。"}}, {"subject": "社会", "field": "地理", "question": "世界の主要な砂漠はどれか", "choices": ["サハラ砂漠", "ゴビ砂漠", "モハーヴェ砂漠", "アタカマ砂漠", "アマゾン川"], "answer_index": 0, "explanation": "サハラ砂漠は世界の主要な砂漠の一つで、アフリカ大陸に広がる。", "retry": {"question": "世界の主要な砂漠はどれか", "choices": ["サハラ砂漠", "ゴビ砂漠", "モハーヴェ砂漠", "アタカマ砂漠", "アマゾン川"], "answer_index": 0, "explanation": "サハラ砂漠は世界の主要な砂漠の一つで、アフリカ大陸に広がる。"}}, {"subject": "社会", "field": "公民", "question": "日本の国会の議院は何と呼ばれるか", "choices": ["衆議院と参議院", "皇室と内閣", "最高裁判所と地方裁判所", "内閣と閣僚", "皇宮と代議士"], "answer_index": 0, "explanation": "日本の国会の議院は、衆議院と参議院の二院制である。", "retry": {"question": "日本の国会の議院は何と呼ばれるか", "choices": ["衆議院と参議院", "皇室と内閣", "最高裁判所と地方裁判所", "内閣と閣僚", "皇宮と代議士"], "answer_index": 0, "explanation": "日本の国会の議院は、衆議院と参議院の二院制である。"}}, {"subject": "社会", "field": "歴史", "question": "第二次世界大戦後の日本の占領はどの国によって行われたか", "choices": ["アメリカ", "イギリス", "フランス", "ソビエト連邦", "中華人民共和国"], "answer_index": 0, "explanation": "第二次世界大戦後の日本の占領は、アメリカを中心とした連合国によって行われた。", "retry": {"question": "第二次世界大戦後の日本の占領はどの国によって行われたか", "choices": ["アメリカ", "イギリス", "フランス", "ソビエト連邦", "中華人民共和国"], "answer_index": 0, "explanation": "第二次世界大戦後の日本の占領は、アメリカを中心とした連合国によって行われた。"}}, {"subject": "社会", "field": "地理", "question": "アジアの主要な山脈はどれか", "choices": ["ヒマラヤ山脈", "カラコルム山脈", "チベット高原", "シベリア", "アンデス山脈"], "answer_index": 0, "explanation": "ヒマラヤ山脈はアジアの主要な山脈の一つで、インドとネパールにまたがる。", "retry": {"question": "アジアの主要な山脈はどれか", "choices": ["ヒマラヤ山脈", "カラコルム山脈", "チベット高原", "シベリア", "アンデス山脈"], "answer_index": 0, "explanation": "ヒマラヤ山脈はアジアの主要な山脈の一つで、インドとネパールにまたがる。"}}, {"subject": "社会", "field": "公民", "question": "日本の地方自治体の長はどう呼ばれるか", "choices": ["知事", "市長", "町長", "村長", "これら全部"], "answer_index": 4, "explanation": "日本の地方自治体の長は、都道府県の知事、市の市長、町の町長、村の村長と呼ばれる。", "retry": {"question": "日本の地方自治体の長はどう呼ばれるか", "choices": ["知事", "市長", "町長", "村長", "これら全部"], "answer_index": 4, "explanation": "日本の地方自治体の長は、都道府県の知事、市の市長、町の町長、村の村長と呼ばれる。"}}, {"subject": "社会", "field": "歴史", "question": "江戸時代の日本で、徳川幕府が行った年中行事は何と呼ばれるか", "choices": ["お盆", "正月", "花見", "端午の節句", "以上全部"], "answer_index": 4, "explanation": "江戸時代の日本では、徳川幕府が行った年中行事に、お盆、正月、花見、端午の節句などがある。", "retry": {"question": "江戸時代の日本で、徳川幕府が行った年中行事は何と呼ばれるか", "choices": ["お盆", "正月", "花見", "端午の節句", "以上全部"], "answer_index": 4, "explanation": "江戸時代の日本では、徳川幕府が行った年中行事に、お盆、正月、花見、端午の節句などがある。"}}, {"subject": "社会", "field": "地理", "question": "世界の主要な海峡はどれか", "choices": ["マルタ海峡", "イギリス海峡", "マカッサル海峡", "ボスフォラス海峡", "マラッカ海峡"], "answer_index": 4, "explanation": "マラッカ海峡は、世界の主要な海峡の一つで、マレーシアとインドネシアに位置する。", "retry": {"question": "世界の主要な海峡はどれか", "choices": ["マルタ海峡", "イギリス海峡", "マカッサル海峡", "ボスフォラス海峡", "マラッカ海峡"], "answer_index": 4, "explanation": "マラッカ海峡は、世界の主要な海峡の一つで、マレーシアとインドネシアに位置する。"}}, {"subject": "社会", "field": "公民", "question": "日本の裁判所の種類は何と呼ばれるか", "choices": ["最高裁判所、高等裁判所、地方裁判所、家庭裁判所、簡易裁判所", "最高裁判所、地方裁判所、家庭裁判所", "最高裁判所、高等裁判所、地方裁判所", "最高裁判所、家庭裁判所、簡易裁判所", "最高裁判所、地方裁判所"], "answer_index": 0, "explanation": "日本の裁判所の種類は、最高裁判所、高等裁判所、地方裁判所、家庭裁判所、簡易裁判所の五つである。", "retry": {"question": "日本の裁判所の種類は何と呼ばれるか", "choices": ["最高裁判所、高等裁判所、地方裁判所、家庭裁判所、簡易裁判所", "最高裁判所、地方裁判所、家庭裁判所", "最高裁判所、高等裁判所、地方裁判所", "最高裁判所、家庭裁判所、簡易裁判所", "最高裁判所、地方裁判所"], "answer_index": 0, "explanation": "日本の裁判所の種類は、最高裁判所、高等裁判所、地方裁判所、家庭裁判所、簡易裁判所の五つである。"}}, {"subject": "社会", "field": "歴史", "question": "明治時代の日本で、廃止された税制は何と呼ばれるか", "choices": ["所領", "石高", "地租", "税金", "以上全部"], "answer_index": 1, "explanation": "明治時代の日本では、石高と呼ばれる税制が廃止された。", "retry": {"question": "明治時代の日本で、廃止された税制は何と呼ばれるか", "choices": ["所領", "石高", "地租", "税金", "以上全部"], "answer_index": 1, "explanation": "明治時代の日本では、石高と呼ばれる税制が廃止された。"}}, {"subject": "社会", "field": "地理", "question": "アフリカ大陸の主要な湖はどれか", "choices": ["ヴィクトリア湖", "タンザニア湖", "マラウイ湖", "ナイアガラ湖", "バイカル湖"], "answer_index": 0, "explanation": "ヴィクトリア湖はアフリカ大陸の主要な湖の一つで、ケニア、ウガンダ、タンザニアの三か国にまたがる。", "retry": {"question": "アフリカ大陸の主要な湖はどれか", "choices": ["ヴィクトリア湖", "タンザニア湖", "マラウイ湖", "ナイアガラ湖", "バイカル湖"], "answer_index": 0, "explanation": "ヴィクトリア湖はアフリカ大陸の主要な湖の一つで、ケニア、ウガンダ、タンザニアの三か国にまたがる。"}}, {"subject": "社会", "field": "公民", "question": "日本の国民の基本的権利は何と呼ばれるか", "choices": ["人権", "自由", "平等", "正義", "以上全部"], "answer_index": 0, "explanation": "日本の国民の基本的権利は、人権と呼ばれる。", "retry": {"question": "日本の国民の基本的権利は何と呼ばれるか", "choices": ["人権", "自由", "平等", "正義", "以上全部"], "answer_index": 0, "explanation": "日本の国民の基本的権利は、人権と呼ばれる。"}}, {"subject": "社会", "field": "歴史", "question": "第二次世界大戦後の日本の占領期間はいつからいつまでか", "choices": ["1945年～1952年", "1945年～1955年", "1946年～1951年", "1947年～1950年", "1948年～1953年"], "answer_index": 0, "explanation": "第二次世界大戦後の日本の占領期間は、1945年から1952年までである。", "retry": {"question": "第二次世界大戦後の日本の占領期間はいつからいつまでか", "choices": ["1945年～1952年", "1945年～1955年", "1946年～1951年", "1947年～1950年", "1948年～1953年"], "answer_index": 0, "explanation": "第二次世界大戦後の日本の占領期間は、1945年から1952年までである。"}}, {"subject": "社会", "field": "地理", "question": "ヨーロッパ大陸の主要な半島はどれか", "choices": ["イベリア半島", "イタリア半島", "バルカン半島", "スカンジナビア半島", "以上全部"], "answer_index": 4, "explanation": "ヨーロッパ大陸の主要な半島には、イベリア半島、イタリア半島、バルカン半島、スカンジナビア半島などがある。", "retry": {"question": "ヨーロッパ大陸の主要な半島はどれか", "choices": ["イベリア半島", "イタリア半島", "バルカン半島", "スカンジナビア半島", "以上全部"], "answer_index": 4, "explanation": "ヨーロッパ大陸の主要な半島には、イベリア半島、イタリア半島、バルカン半島、スカンジナビア半島などがある。"}}, {"subject": "社会", "field": "公民", "question": "日本の地方自治体の議会は何と呼ばれるか", "choices": ["都道府県議会", "市議会", "町議会", "村議会", "以上全部"], "answer_index": 4, "explanation": "日本の地方自治体の議会は、都道府県議会、市議会、町議会、村議会と呼ばれる。", "retry": {"question": "日本の地方自治体の議会は何と呼ばれるか", "choices": ["都道府県議会", "市議会", "町議会", "村議会", "以上全部"], "answer_index": 4, "explanation": "日本の地方自治体の議会は、都道府県議会、市議会、町議会、村議会と呼ばれる。"}}, {"subject": "社会", "field": "歴史", "question": "明治時代の日本で、導入された新しい暦は何と呼ばれるか", "choices": ["グレゴリオ暦", "ユリウス暦", "和暦", "太陽暦", "太陰暦"], "answer_index": 0, "explanation": "明治時代の日本では、グレゴリオ暦が導入された。", "retry": {"question": "明治時代の日本で、導入された新しい暦は何と呼ばれるか", "choices": ["グレゴリオ暦", "ユリウス暦", "和暦", "太陽暦", "太陰暦"], "answer_index": 0, "explanation": "明治時代の日本では、グレゴリオ暦が導入された。"}}, {"subject": "英語", "field": "比較級", "question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は形容詞の前にmoreまたは後ろに-erを付ける。tallの比較級はtallerになる。", "retry": {"question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は形容詞の前にmoreまたは後ろに-erを付ける。tallの比較級はtallerになる。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞のtoは動詞の前について目的を表す。", "retry": {"question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞のtoは動詞の前について目的を表す。"}}, {"subject": "英語", "field": "受動態", "question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "受動態の過去分詞は動詞の原形に-edまたは不規則変化を加える。speakの受動態の過去分詞はspokenになる。", "retry": {"question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "受動態の過去分詞は動詞の原形に-edまたは不規則変化を加える。speakの受動態の過去分詞はspokenになる。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞の現在形は主語が単数の場合is、複数の場合areになる。", "retry": {"question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞の現在形は主語が単数の場合is、複数の場合areになる。"}}, {"subject": "英語", "field": "助動詞", "question": "I ( ) go to the movies tonight.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 1, "explanation": "助動詞のwillは未来の予定を表す。", "retry": {"question": "I ( ) go to the movies tonight.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 1, "explanation": "助動詞のwillは未来の予定を表す。"}}, {"subject": "英語", "field": "比較級", "question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "very delicious", "deliciously"], "answer_index": 1, "explanation": "形容詞の比較級はmoreまたは-erを使用する。", "retry": {"question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "very delicious", "deliciously"], "answer_index": 1, "explanation": "形容詞の比較級はmoreまたは-erを使用する。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) books.", "choices": ["to read", "reading", "read", "a book", "books"], "answer_index": 1, "explanation": "動詞のgerund形は動詞の原形に-ingを加える。", "retry": {"question": "I love ( ) books.", "choices": ["to read", "reading", "read", "a book", "books"], "answer_index": 1, "explanation": "動詞のgerund形は動詞の原形に-ingを加える。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by a famous director.", "choices": ["is direct", "is directed", "was direct", "was directed", "directs"], "answer_index": 1, "explanation": "受動態の現在形はbe動詞の現在形に過去分詞を加える。", "retry": {"question": "The play ( ) by a famous director.", "choices": ["is direct", "is directed", "was direct", "was directed", "directs"], "answer_index": 1, "explanation": "受動態の現在形はbe動詞の現在形に過去分詞を加える。"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) from Japan.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 1, "explanation": "be動詞の現在形は主語が複数の場合areになる。", "retry": {"question": "They ( ) from Japan.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 1, "explanation": "be動詞の現在形は主語が複数の場合areになる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try this cake, it's delicious.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 3, "explanation": "助動詞のshouldはアドバイスを表す。", "retry": {"question": "You ( ) try this cake, it's delicious.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 3, "explanation": "助動詞のshouldはアドバイスを表す。"}}, {"subject": "英語", "field": "比較級", "question": "This is the ( ) book I've ever read.", "choices": ["best", "better", "good", "well", "goodly"], "answer_index": 0, "explanation": "最上級はthe+形容詞の最上級形を使用する。", "retry": {"question": "This is the ( ) book I've ever read.", "choices": ["best", "better", "good", "well", "goodly"], "answer_index": 0, "explanation": "最上級はthe+形容詞の最上級形を使用する。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to travel around the world.", "choices": ["to", "a", "an", "the", "and"], "answer_index": 0, "explanation": "不定詞のtoは動詞の前について目的を表す。", "retry": {"question": "I want ( ) to travel around the world.", "choices": ["to", "a", "an", "the", "and"], "answer_index": 0, "explanation": "不定詞のtoは動詞の前について目的を表す。"}}, {"subject": "英語", "field": "受動態", "question": "The new policy ( ) by the company next month.", "choices": ["will be introduced", "is introduced", "was introduced", "introduces", "introduce"], "answer_index": 0, "explanation": "受動態の未来形はwill be+過去分詞を使用する。", "retry": {"question": "The new policy ( ) by the company next month.", "choices": ["will be introduced", "is introduced", "was introduced", "introduces", "introduce"], "answer_index": 0, "explanation": "受動態の未来形はwill be+過去分詞を使用する。"}}, {"subject": "英語", "field": "be動詞", "question": "She ( ) a doctor.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 0, "explanation": "be動詞の現在形は主語が単数の場合isになる。", "retry": {"question": "She ( ) a doctor.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 0, "explanation": "be動詞の現在形は主語が単数の場合isになる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English fluently.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 0, "explanation": "助動詞のcanは能力を表す。", "retry": {"question": "You ( ) speak English fluently.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 0, "explanation": "助動詞のcanは能力を表す。"}}, {"subject": "英語", "field": "比較級", "question": "This hotel is ( ) than the one we stayed at last year.", "choices": ["expensive", "more expensive", "most expensive", "very expensive", "expensively"], "answer_index": 1, "explanation": "形容詞の比較級はmoreまたは-erを使用する。", "retry": {"question": "This hotel is ( ) than the one we stayed at last year.", "choices": ["expensive", "more expensive", "most expensive", "very expensive", "expensively"], "answer_index": 1, "explanation": "形容詞の比較級はmoreまたは-erを使用する。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "a music", "music"], "answer_index": 1, "explanation": "動詞のgerund形は動詞の原形に-ingを加える。", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "a music", "music"], "answer_index": 1, "explanation": "動詞のgerund形は動詞の原形に-ingを加える。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by a famous actor.", "choices": ["is acted", "is acting", "was acted", "was acting", "acts"], "answer_index": 0, "explanation": "受動態の現在形はbe動詞の現在形に過去分詞を加える。", "retry": {"question": "The play ( ) by a famous actor.", "choices": ["is acted", "is acting", "was acted", "was acting", "acts"], "answer_index": 0, "explanation": "受動態の現在形はbe動詞の現在形に過去分詞を加える。"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) students.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 1, "explanation": "be動詞の現在形は主語が複数の場合areになる。", "retry": {"question": "They ( ) students.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 1, "explanation": "be動詞の現在形は主語が複数の場合areになる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try to come early.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 3, "explanation": "助動詞のshouldはアドバイスを表す。", "retry": {"question": "You ( ) try to come early.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 3, "explanation": "助動詞のshouldはアドバイスを表す。"}}, {"subject": "英語", "field": "比較級", "question": "This is the ( ) city I've ever visited.", "choices": ["beautiful", "more beautiful", "most beautiful", "very beautiful", "beautifully"], "answer_index": 2, "explanation": "最上級はthe+形容詞の最上級形を使用する。", "retry": {"question": "This is the ( ) city I've ever visited.", "choices": ["beautiful", "more beautiful", "most beautiful", "very beautiful", "beautifully"], "answer_index": 2, "explanation": "最上級はthe+形容詞の最上級形を使用する。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to learn English.", "choices": ["to", "a", "an", "the", "and"], "answer_index": 0, "explanation": "不定詞のtoは動詞の前について目的を表す。", "retry": {"question": "I want ( ) to learn English.", "choices": ["to", "a", "an", "the", "and"], "answer_index": 0, "explanation": "不定詞のtoは動詞の前について目的を表す。"}}, {"subject": "英語", "field": "受動態", "question": "The new policy ( ) by the company next year.", "choices": ["will be introduced", "is introduced", "was introduced", "introduces", "introduce"], "answer_index": 0, "explanation": "受動態の未来形はwill be+過去分詞を使用する。", "retry": {"question": "The new policy ( ) by the company next year.", "choices": ["will be introduced", "is introduced", "was introduced", "introduces", "introduce"], "answer_index": 0, "explanation": "受動態の未来形はwill be+過去分詞を使用する。"}}, {"subject": "英語", "field": "be動詞", "question": "She ( ) a teacher.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 0, "explanation": "be動詞の現在形は主語が単数の場合isになる。", "retry": {"question": "She ( ) a teacher.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 0, "explanation": "be動詞の現在形は主語が単数の場合isになる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English fluently if you practice every day.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 0, "explanation": "助動詞のcanは能力を表す。", "retry": {"question": "You ( ) speak English fluently if you practice every day.", "choices": ["can", "will", "must", "should", "may"], "answer_index": 0, "explanation": "助動詞のcanは能力を表す。"}}];
+const LC=['a','b','c','d','e'];
+const NOTIFY_URL='https://script.google.com/macros/s/AKfycbyOa4De8zupkRe0tXU3lz18tWkPG4jg2HdVgUhFC_BnYrUDPqlvKCAS4Y4ccfEj8KWi/exec';
+const NOTIFY_SECRET='yuukeibotquiz2026';
+const DATE_STR='2026年5月25日(月)';
+const QUIZ_URL='https://kawakanpa.github.io/line-quiz-bot/quiz-2026-05-25.html';
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function init(){
+  let h='';
+  QS.forEach((q,i)=>{
+    const ch=q.choices.map((c,ci)=>`<label class="clabel" id="lbl-${i}-${ci}"><input type="radio" name="q${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    const rq=q.retry;
+    const rch=rq.choices.map((c,ci)=>`<label class="clabel" id="rlbl-${i}-${ci}"><input type="radio" name="rq${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    h+=`<div class="qcard" id="card-${i}">
+<div class="qhead"><span class="qnum">問${i+1}</span><span class="tag">${esc(q.subject)} / ${esc(q.field)}</span></div>
+<div class="qtext">${esc(q.question)}</div>
+<div id="ch-${i}">${ch}</div>
+<div class="resarea" id="res-${i}">
+  <div id="bdg-${i}"></div>
+  <div class="expl">${esc(q.explanation)}</div>
+  <div class="rbtns" id="rbtns-${i}">
+    <button class="btn btn-retry" onclick="showRetry(${i})">わかった！練習問題を解く 🔄</button>
+  </div>
+</div>
+<div class="retrybox" id="retry-${i}">
+  <h4>🔄 もう一度チャレンジ！</h4>
+  <div class="qtext">${esc(rq.question)}</div>
+  <div id="rch-${i}">${rch}</div>
+  <button class="btn-confirm" id="rcbtn-${i}" onclick="submitRetry(${i})">確認する</button>
+  <div class="rresult" id="rres-${i}">
+    <div id="rbdg-${i}"></div>
+    <div class="expl">${esc(rq.explanation)}</div>
+  </div>
+</div>
+</div>`;
+  });
+  document.getElementById('qlist').innerHTML=h;
+}
+function submitAll(){
+  const missing=QS.reduce((a,_,i)=>{if(!document.querySelector(`input[name="q${i}"]:checked`))a.push(i+1);return a;},[]);
+  if(missing.length){alert(`問${missing.join('、')}がまだ答えていません！`);return;}
+  let cor=0;
+  const resList=[];
+  QS.forEach((q,i)=>{
+    const sv=parseInt(document.querySelector(`input[name="q${i}"]:checked`).value);
+    const ok=sv===q.answer_index;
+    if(ok)cor++;
+    resList.push({num:i+1,subject:q.subject,field:q.field,correct:ok});
+    document.querySelectorAll(`#ch-${i} .clabel`).forEach((l,li)=>{
+      if(li===q.answer_index)l.classList.add('hl-ok');
+      else if(li===sv&&!ok)l.classList.add('hl-ng');
+    });
+    document.querySelectorAll(`input[name="q${i}"]`).forEach(r=>r.disabled=true);
+    document.getElementById(`bdg-${i}`).innerHTML=ok?
+      '<span class="badge-ok">✓ 正解！</span>':
+      `<span class="badge-ng">✗ 不正解（正解: ${LC[q.answer_index]}）</span>`;
+    document.getElementById(`res-${i}`).style.display='block';
+    document.getElementById(`card-${i}`).classList.add(ok?'ok':'ng');
+    if(ok){const rb=document.getElementById(`rbtns-${i}`);if(rb)rb.style.display='none';}
+  });
+  const sc=document.getElementById('scorecard');
+  const isPerfect=cor===QS.length;
+  const topMsg=isPerfect?'🎉 全問正解！':'✅ 回答完了！';
+  sc.innerHTML=`<div style="font-size:1.4em;font-weight:700;color:#2e7d32;margin-bottom:8px">${topMsg}</div><div class="score-num">${cor}<span style="font-size:.5em;color:#666"> / ${QS.length}</span></div><div class="score-sub">正解率 ${Math.round(cor/QS.length*100)}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
+  sc.style.display='block';
+  document.getElementById('subwrap').style.display='none';
+  sc.scrollIntoView({behavior:'smooth'});
+  sendResultsNotification(cor,resList);
+}
+function markOk(i){document.getElementById(`rbtns-${i}`).innerHTML='<span class="ok-msg">✓ 理解しました！</span>';}
+function showRetry(i){
+  document.getElementById(`retry-${i}`).style.display='block';
+  document.getElementById(`rbtns-${i}`).style.display='none';
+  document.getElementById(`retry-${i}`).scrollIntoView({behavior:'smooth'});
+}
+function submitRetry(i){
+  const rq=QS[i].retry;
+  const sel=document.querySelector(`input[name="rq${i}"]:checked`);
+  if(!sel){alert('答えを選んでください！');return;}
+  const sv=parseInt(sel.value);
+  const ok=sv===rq.answer_index;
+  document.querySelectorAll(`#rch-${i} .clabel`).forEach((l,li)=>{
+    if(li===rq.answer_index)l.classList.add('hl-ok');
+    else if(li===sv&&!ok)l.classList.add('hl-ng');
+  });
+  document.querySelectorAll(`input[name="rq${i}"]`).forEach(r=>r.disabled=true);
+  document.getElementById(`rbdg-${i}`).innerHTML=ok?
+    '<span class="badge-ok">✓ 正解！よくできました！</span>':
+    `<span class="badge-ng">✗ 不正解（正解: ${LC[rq.answer_index]}）</span>`;
+  document.getElementById(`rres-${i}`).style.display='block';
+  document.getElementById(`rcbtn-${i}`).style.display='none';
+}
+function sendResultsNotification(cor,resList){
+  if(!NOTIFY_URL)return;
+  const payload=JSON.stringify({secret:NOTIFY_SECRET,type:'results',date:DATE_STR,score:cor,total:QS.length,results:resList,quiz_url:QUIZ_URL});
+  fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:payload}).catch(()=>{});
+  if(cor===QS.length){
+    const p=JSON.stringify({secret:NOTIFY_SECRET,type:'perfect',date:DATE_STR,total:QS.length,quiz_url:QUIZ_URL});
+    setTimeout(()=>fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:p}).catch(()=>{}),500);
+  }
+}
+init();
+</script>
+</body>
+</html>
