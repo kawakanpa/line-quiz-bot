@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>クイズ 2026年5月26日(火)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f0f4f8;color:#333;padding:12px;font-size:15px}
+.hdr{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:18px 16px;border-radius:14px;margin-bottom:16px;text-align:center;box-shadow:0 4px 12px rgba(46,125,50,.3)}
+.hdr h1{font-size:1.3em;margin-bottom:6px}
+.hdr p{font-size:.85em;opacity:.9}
+.score-card{display:none;background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.score-num{font-size:3em;font-weight:700;color:#2e7d32;line-height:1}
+.score-sub{color:#666;margin-top:6px;font-size:.9em}
+.qcard{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.qcard.ok{border-left:5px solid #43a047}
+.qcard.ng{border-left:5px solid #e53935}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qnum{font-weight:700;color:#2e7d32;font-size:1.05em}
+.tag{background:#e8f5e9;color:#1b5e20;padding:3px 10px;border-radius:20px;font-size:.78em}
+.qtext{line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.clabel{display:flex;align-items:flex-start;padding:10px 12px;border:2px solid #e0e0e0;border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;line-height:1.5}
+.clabel:hover{border-color:#43a047}
+.clabel input{margin-top:2px;margin-right:10px;flex-shrink:0}
+.hl-ok{background:#e8f5e9!important;border-color:#43a047!important}
+.hl-ng{background:#ffebee!important;border-color:#e53935!important}
+.resarea{display:none;margin-top:12px}
+.badge-ok{display:inline-block;background:#43a047;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.badge-ng{display:inline-block;background:#e53935;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.expl{background:#f9f9f9;border-left:4px solid #43a047;padding:10px 12px;border-radius:6px;font-size:.88em;line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.rbtns{display:flex;gap:8px}
+.btn{padding:10px 0;border:none;border-radius:10px;font-size:.9em;font-weight:700;cursor:pointer;flex:1;text-align:center}
+.btn-ok{background:#43a047;color:#fff}
+.btn-retry{background:#f4511e;color:#fff}
+.retrybox{display:none;background:#fff8e1;border:2px solid #ffb300;border-radius:12px;padding:14px;margin-top:12px}
+.retrybox h4{color:#e65100;margin-bottom:10px;font-size:.95em}
+.btn-confirm{display:block;width:100%;padding:11px;background:#1976d2;color:#fff;border:none;border-radius:10px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:10px}
+.rresult{display:none;margin-top:10px}
+.subwrap{text-align:center;padding:10px 0 24px}
+.btn-submit{background:#1976d2;color:#fff;padding:15px 48px;font-size:1.1em;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 12px rgba(25,118,210,.35)}
+.ok-msg{color:#43a047;font-weight:700;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>📚 今日のクイズ</h1>
+  <p>2026年5月26日(火) ／ 理科・英語 ／ 全46問</p>
+</div>
+<div id="scorecard" class="score-card"></div>
+<div id="qlist"></div>
+<div class="subwrap" id="subwrap">
+  <button class="btn-submit" onclick="submitAll()">答えを提出する</button>
+</div>
+<script>
+const QS=[{"subject": "理科", "field": "電気", "question": "電流1Aの抵抗6Ωの電路で消費される電力はどれか？", "choices": ["3W", "6W", "10W", "12W", "24W"], "answer_index": 1, "explanation": "電力P=電流I×電圧V、V=RIなので、P=RI²となり、I=1A、R=6Ωのとき、P=1×6=6W", "retry": {"question": "電流1Aの抵抗6Ωの電路で消費される電力はどれか？", "choices": ["3W", "6W", "10W", "12W", "24W"], "answer_index": 1, "explanation": "電力P=電流I×電圧V、V=RIなので、P=RI²となり、I=1A、R=6Ωのとき、P=1×6=6W"}}, {"subject": "理科", "field": "物理", "question": "物体の密度が3g/cm³、体積が20cm³のとき、質量はどれか？", "choices": ["20g", "30g", "40g", "50g", "60g"], "answer_index": 4, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=3g/cm³、V=20cm³のとき、m=3×20=60g", "retry": {"question": "物体の密度が3g/cm³、体積が20cm³のとき、質量はどれか？", "choices": ["20g", "30g", "40g", "50g", "60g"], "answer_index": 4, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=3g/cm³、V=20cm³のとき、m=3×20=60g"}}, {"subject": "理科", "field": "物理", "question": "物体の移動距離が20m、かかった時間が4秒のとき、速さはどれか？", "choices": ["2m/s", "4m/s", "5m/s", "6m/s", "8m/s"], "answer_index": 1, "explanation": "速さv=距離s/時間tなので、v=s/tとなり、s=20m、t=4秒のとき、v=20/4=5m/s", "retry": {"question": "物体の移動距離が20m、かかった時間が4秒のとき、速さはどれか？", "choices": ["2m/s", "4m/s", "5m/s", "6m/s", "8m/s"], "answer_index": 1, "explanation": "速さv=距離s/時間tなので、v=s/tとなり、s=20m、t=4秒のとき、v=20/4=5m/s"}}, {"subject": "理科", "field": "化学", "question": "水の密度が1g/cm³、体積が50cm³のとき、質量はどれか？", "choices": ["40g", "45g", "50g", "55g", "60g"], "answer_index": 2, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1g/cm³、V=50cm³のとき、m=1×50=50g", "retry": {"question": "水の密度が1g/cm³、体積が50cm³のとき、質量はどれか？", "choices": ["40g", "45g", "50g", "55g", "60g"], "answer_index": 2, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1g/cm³、V=50cm³のとき、m=1×50=50g"}}, {"subject": "理科", "field": "物理", "question": "物体の速度が2m/sから6m/sに変化したとき、速度の変化はどれか？", "choices": ["2m/s", "4m/s", "6m/s", "8m/s", "10m/s"], "answer_index": 1, "explanation": "速度の変化は、最終速度と初期速度の差なので、6-2=4m/s", "retry": {"question": "物体の速度が2m/sから6m/sに変化したとき、速度の変化はどれか？", "choices": ["2m/s", "4m/s", "6m/s", "8m/s", "10m/s"], "answer_index": 1, "explanation": "速度の変化は、最終速度と初期速度の差なので、6-2=4m/s"}}, {"subject": "理科", "field": "電気", "question": "電圧12Vの電路で電流2Aが流れるとき、抵抗はどれか？", "choices": ["4Ω", "6Ω", "8Ω", "10Ω", "12Ω"], "answer_index": 1, "explanation": "抵抗R=電圧V/電流Iなので、R=V/Iとなり、V=12V、I=2Aのとき、R=12/2=6Ω", "retry": {"question": "電圧12Vの電路で電流2Aが流れるとき、抵抗はどれか？", "choices": ["4Ω", "6Ω", "8Ω", "10Ω", "12Ω"], "answer_index": 1, "explanation": "抵抗R=電圧V/電流Iなので、R=V/Iとなり、V=12V、I=2Aのとき、R=12/2=6Ω"}}, {"subject": "理科", "field": "物理", "question": "物体の重さが30N、質量が3kgのとき、重力加速度はどれか？", "choices": ["5m/s²", "6m/s²", "8m/s²", "9m/s²", "10m/s²"], "answer_index": 3, "explanation": "重力加速度g=重さW/質量mなので、g=W/mとなり、W=30N、m=3kgのとき、g=30/3=10m/s²", "retry": {"question": "物体の重さが30N、質量が3kgのとき、重力加速度はどれか？", "choices": ["5m/s²", "6m/s²", "8m/s²", "9m/s²", "10m/s²"], "answer_index": 3, "explanation": "重力加速度g=重さW/質量mなので、g=W/mとなり、W=30N、m=3kgのとき、g=30/3=10m/s²"}}, {"subject": "理科", "field": "化学", "question": "二酸化炭素の密度が1.8g/L、体積が20Lのとき、質量はどれか？", "choices": ["20g", "30g", "36g", "40g", "50g"], "answer_index": 2, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1.8g/L、V=20Lのとき、m=1.8×20=36g", "retry": {"question": "二酸化炭素の密度が1.8g/L、体積が20Lのとき、質量はどれか？", "choices": ["20g", "30g", "36g", "40g", "50g"], "answer_index": 2, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1.8g/L、V=20Lのとき、m=1.8×20=36g"}}, {"subject": "理科", "field": "物理", "question": "物体の移動距離が40m、かかった時間が8秒のとき、速さはどれか？", "choices": ["2m/s", "4m/s", "5m/s", "6m/s", "8m/s"], "answer_index": 1, "explanation": "速さv=距離s/時間tなので、v=s/tとなり、s=40m、t=8秒のとき、v=40/8=5m/s", "retry": {"question": "物体の移動距離が40m、かかった時間が8秒のとき、速さはどれか？", "choices": ["2m/s", "4m/s", "5m/s", "6m/s", "8m/s"], "answer_index": 1, "explanation": "速さv=距離s/時間tなので、v=s/tとなり、s=40m、t=8秒のとき、v=40/8=5m/s"}}, {"subject": "理科", "field": "電気", "question": "電流3Aの抵抗4Ωの電路で消費される電力はどれか？", "choices": ["6W", "8W", "10W", "12W", "16W"], "answer_index": 3, "explanation": "電力P=電流I×電圧V、V=RIなので、P=RI²となり、I=3A、R=4Ωのとき、P=3×4=12W", "retry": {"question": "電流3Aの抵抗4Ωの電路で消費される電力はどれか？", "choices": ["6W", "8W", "10W", "12W", "16W"], "answer_index": 3, "explanation": "電力P=電流I×電圧V、V=RIなので、P=RI²となり、I=3A、R=4Ωのとき、P=3×4=12W"}}, {"subject": "理科", "field": "化学", "question": "水素ガスの密度が0.09g/L、体積が50Lのとき、質量はどれか？", "choices": ["2g", "3g", "4g", "4.5g", "5g"], "answer_index": 3, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=0.09g/L、V=50Lのとき、m=0.09×50=4.5g", "retry": {"question": "水素ガスの密度が0.09g/L、体積が50Lのとき、質量はどれか？", "choices": ["2g", "3g", "4g", "4.5g", "5g"], "answer_index": 3, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=0.09g/L、V=50Lのとき、m=0.09×50=4.5g"}}, {"subject": "理科", "field": "物理", "question": "物体の速度が4m/sから8m/sに変化したとき、速度の変化はどれか？", "choices": ["2m/s", "4m/s", "6m/s", "8m/s", "12m/s"], "answer_index": 1, "explanation": "速度の変化は、最終速度と初期速度の差なので、8-4=4m/s", "retry": {"question": "物体の速度が4m/sから8m/sに変化したとき、速度の変化はどれか？", "choices": ["2m/s", "4m/s", "6m/s", "8m/s", "12m/s"], "answer_index": 1, "explanation": "速度の変化は、最終速度と初期速度の差なので、8-4=4m/s"}}, {"subject": "理科", "field": "電気", "question": "電圧24Vの電路で電流1Aが流れるとき、抵抗はどれか？", "choices": ["12Ω", "16Ω", "20Ω", "24Ω", "30Ω"], "answer_index": 3, "explanation": "抵抗R=電圧V/電流Iなので、R=V/Iとなり、V=24V、I=1Aのとき、R=24/1=24Ω", "retry": {"question": "電圧24Vの電路で電流1Aが流れるとき、抵抗はどれか？", "choices": ["12Ω", "16Ω", "20Ω", "24Ω", "30Ω"], "answer_index": 3, "explanation": "抵抗R=電圧V/電流Iなので、R=V/Iとなり、V=24V、I=1Aのとき、R=24/1=24Ω"}}, {"subject": "理科", "field": "化学", "question": "酸素ガスの密度が1.3g/L、体積が30Lのとき、質量はどれか？", "choices": ["30g", "35g", "39g", "40g", "45g"], "answer_index": 2, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1.3g/L、V=30Lのとき、m=1.3×30=39g", "retry": {"question": "酸素ガスの密度が1.3g/L、体積が30Lのとき、質量はどれか？", "choices": ["30g", "35g", "39g", "40g", "45g"], "answer_index": 2, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1.3g/L、V=30Lのとき、m=1.3×30=39g"}}, {"subject": "理科", "field": "物理", "question": "物体の移動距離が60m、かかった時間が10秒のとき、速さはどれか？", "choices": ["4m/s", "5m/s", "6m/s", "8m/s", "10m/s"], "answer_index": 2, "explanation": "速さv=距離s/時間tなので、v=s/tとなり、s=60m、t=10秒のとき、v=60/10=6m/s", "retry": {"question": "物体の移動距離が60m、かかった時間が10秒のとき、速さはどれか？", "choices": ["4m/s", "5m/s", "6m/s", "8m/s", "10m/s"], "answer_index": 2, "explanation": "速さv=距離s/時間tなので、v=s/tとなり、s=60m、t=10秒のとき、v=60/10=6m/s"}}, {"subject": "理科", "field": "電気", "question": "電流2Aの抵抗8Ωの電路で消費される電力はどれか？", "choices": ["10W", "12W", "16W", "20W", "32W"], "answer_index": 2, "explanation": "電力P=電流I×電圧V、V=RIなので、P=RI²となり、I=2A、R=8Ωのとき、P=2×8=16W", "retry": {"question": "電流2Aの抵抗8Ωの電路で消費される電力はどれか？", "choices": ["10W", "12W", "16W", "20W", "32W"], "answer_index": 2, "explanation": "電力P=電流I×電圧V、V=RIなので、P=RI²となり、I=2A、R=8Ωのとき、P=2×8=16W"}}, {"subject": "理科", "field": "化学", "question": "二酸化炭素の密度が1.8g/L、体積が15Lのとき、質量はどれか？", "choices": ["20g", "25g", "27g", "30g", "35g"], "answer_index": 2, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1.8g/L、V=15Lのとき、m=1.8×15=27g", "retry": {"question": "二酸化炭素の密度が1.8g/L、体積が15Lのとき、質量はどれか？", "choices": ["20g", "25g", "27g", "30g", "35g"], "answer_index": 2, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1.8g/L、V=15Lのとき、m=1.8×15=27g"}}, {"subject": "理科", "field": "物理", "question": "物体の速度が6m/sから10m/sに変化したとき、速度の変化はどれか？", "choices": ["2m/s", "4m/s", "6m/s", "8m/s", "12m/s"], "answer_index": 1, "explanation": "速度の変化は、最終速度と初期速度の差なので、10-6=4m/s", "retry": {"question": "物体の速度が6m/sから10m/sに変化したとき、速度の変化はどれか？", "choices": ["2m/s", "4m/s", "6m/s", "8m/s", "12m/s"], "answer_index": 1, "explanation": "速度の変化は、最終速度と初期速度の差なので、10-6=4m/s"}}, {"subject": "理科", "field": "電気", "question": "電圧18Vの電路で電流2Aが流れるとき、抵抗はどれか？", "choices": ["6Ω", "8Ω", "9Ω", "12Ω", "18Ω"], "answer_index": 2, "explanation": "抵抗R=電圧V/電流Iなので、R=V/Iとなり、V=18V、I=2Aのとき、R=18/2=9Ω", "retry": {"question": "電圧18Vの電路で電流2Aが流れるとき、抵抗はどれか？", "choices": ["6Ω", "8Ω", "9Ω", "12Ω", "18Ω"], "answer_index": 2, "explanation": "抵抗R=電圧V/電流Iなので、R=V/Iとなり、V=18V、I=2Aのとき、R=18/2=9Ω"}}, {"subject": "理科", "field": "化学", "question": "水の密度が1g/cm³、体積が25cm³のとき、質量はどれか？", "choices": ["20g", "25g", "30g", "35g", "40g"], "answer_index": 1, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1g/cm³、V=25cm³のとき、m=1×25=25g", "retry": {"question": "水の密度が1g/cm³、体積が25cm³のとき、質量はどれか？", "choices": ["20g", "25g", "30g", "35g", "40g"], "answer_index": 1, "explanation": "密度ρ=質量m/体積Vなので、m=ρVとなり、ρ=1g/cm³、V=25cm³のとき、m=1×25=25g"}}, {"subject": "理科", "field": "物理", "question": "物体の移動距離が80m、かかった時間が16秒のとき、速さはどれか？", "choices": ["2m/s", "4m/s", "5m/s", "6m/s", "8m/s"], "answer_index": 1, "explanation": "速さv=距離s/時間tなので、v=s/tとなり、s=80m、t=16秒のとき、v=80/16=5m/s", "retry": {"question": "物体の移動距離が80m、かかった時間が16秒のとき、速さはどれか？", "choices": ["2m/s", "4m/s", "5m/s", "6m/s", "8m/s"], "answer_index": 1, "explanation": "速さv=距離s/時間tなので、v=s/tとなり、s=80m、t=16秒のとき、v=80/16=5m/s"}}, {"subject": "英語", "field": "比較級", "question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": " сравнительная степень прилагательного 'tall' - taller", "retry": {"question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": " сравнительная степень прилагательного 'tall' - taller"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞 'to' は目的を表す", "retry": {"question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞 'to' は目的を表す"}}, {"subject": "英語", "field": "受動態", "question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 3, "explanation": "受動態の現在分詞 'speaking' は、現在進行形の受動態を表す", "retry": {"question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 3, "explanation": "受動態の現在分詞 'speaking' は、現在進行形の受動態を表す"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "単数の主語 'He' に対する現在形の 'be' 動詞は 'is'", "retry": {"question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "単数の主語 'He' に対する現在形の 'be' 動詞は 'is'"}}, {"subject": "英語", "field": "助動詞", "question": "I ( ) go to the movies if I had time.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞 'would' は条件を表す", "retry": {"question": "I ( ) go to the movies if I had time.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞 'would' は条件を表す"}}, {"subject": "英語", "field": "比較級", "question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級の形容詞 'delicious' - more delicious", "retry": {"question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級の形容詞 'delicious' - more delicious"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "heard", "hear"], "answer_index": 1, "explanation": "不定詞 'listening' は目的を表す", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "heard", "hear"], "answer_index": 1, "explanation": "不定詞 'listening' は目的を表す"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by a famous director.", "choices": ["direct", "directs", "directed", "directing", "director"], "answer_index": 2, "explanation": "受動態の過去分詞 'directed' は、過去完了の受動態を表す", "retry": {"question": "The play ( ) by a famous director.", "choices": ["direct", "directs", "directed", "directing", "director"], "answer_index": 2, "explanation": "受動態の過去分詞 'directed' は、過去完了の受動態を表す"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) from the United States.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 1, "explanation": "複数の主語 'They' に対する現在形の 'be' 動詞は 'are'", "retry": {"question": "They ( ) from the United States.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 1, "explanation": "複数の主語 'They' に対する現在形の 'be' 動詞は 'are'"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try this cake, it's delicious.", "choices": ["should", "must", "can", "will", "would"], "answer_index": 0, "explanation": "助動詞 'should' は勧めを表す", "retry": {"question": "You ( ) try this cake, it's delicious.", "choices": ["should", "must", "can", "will", "would"], "answer_index": 0, "explanation": "助動詞 'should' は勧めを表す"}}, {"subject": "英語", "field": "比較級", "question": "He is ( ) at soccer than his brother.", "choices": ["good", "better", "best", "well", "goodly"], "answer_index": 1, "explanation": "比較級の形容詞 'good' - better", "retry": {"question": "He is ( ) at soccer than his brother.", "choices": ["good", "better", "best", "well", "goodly"], "answer_index": 1, "explanation": "比較級の形容詞 'good' - better"}}, {"subject": "英語", "field": "不定詞", "question": "I need ( ) help you with your homework.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞 'to' は目的を表す", "retry": {"question": "I need ( ) help you with your homework.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞 'to' は目的を表す"}}, {"subject": "英語", "field": "受動態", "question": "The new policy ( ) by the company next month.", "choices": ["will introduce", "is introducing", "introduced", "introduce", "will be introduced"], "answer_index": 4, "explanation": "受動態の現在分詞 'will be introduced' は、将来の完了の受動態を表す", "retry": {"question": "The new policy ( ) by the company next month.", "choices": ["will introduce", "is introducing", "introduced", "introduce", "will be introduced"], "answer_index": 4, "explanation": "受動態の現在分詞 'will be introduced' は、将来の完了の受動態を表す"}}, {"subject": "英語", "field": "be動詞", "question": "She ( ) a doctor.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "単数の主語 'She' に対する現在形の 'be' 動詞は 'is'", "retry": {"question": "She ( ) a doctor.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "単数の主語 'She' に対する現在形の 'be' 動詞は 'is'"}}, {"subject": "英語", "field": "助動詞", "question": "If I ( ) you, I would not eat that.", "choices": ["am", "is", "are", "be", "were"], "answer_index": 4, "explanation": "助動詞 'were' は条件を表す", "retry": {"question": "If I ( ) you, I would not eat that.", "choices": ["am", "is", "are", "be", "were"], "answer_index": 4, "explanation": "助動詞 'were' は条件を表す"}}, {"subject": "英語", "field": "比較級", "question": "This is ( ) book I've ever read.", "choices": ["more interesting", "interesting", "most interesting", "interest", "interests"], "answer_index": 2, "explanation": "最上級の形容詞 'interesting' - most interesting", "retry": {"question": "This is ( ) book I've ever read.", "choices": ["more interesting", "interesting", "most interesting", "interest", "interests"], "answer_index": 2, "explanation": "最上級の形容詞 'interesting' - most interesting"}}, {"subject": "英語", "field": "不定詞", "question": "I like ( ) TV in my free time.", "choices": ["to watch", "watching", "watch", "watched", "watches"], "answer_index": 1, "explanation": "不定詞 'watching' は目的を表す", "retry": {"question": "I like ( ) TV in my free time.", "choices": ["to watch", "watching", "watch", "watched", "watches"], "answer_index": 1, "explanation": "不定詞 'watching' は目的を表す"}}, {"subject": "英語", "field": "受動態", "question": "The flowers ( ) by the warm sunshine.", "choices": ["grow", "grows", "grew", "growing", "are grown"], "answer_index": 4, "explanation": "受動態の現在分詞 'are grown' は、現在の完了の受動態を表す", "retry": {"question": "The flowers ( ) by the warm sunshine.", "choices": ["grow", "grows", "grew", "growing", "are grown"], "answer_index": 4, "explanation": "受動態の現在分詞 'are grown' は、現在の完了の受動態を表す"}}, {"subject": "英語", "field": "be動詞", "question": "We ( ) from Canada.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 1, "explanation": "複数の主語 'We' に対する現在形の 'be' 動詞は 'are'", "retry": {"question": "We ( ) from Canada.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 1, "explanation": "複数の主語 'We' に対する現在形の 'be' 動詞は 'are'"}}, {"subject": "英語", "field": "助動詞", "question": "If it ( ) rain tomorrow, we will go to the park.", "choices": ["doesn't", "didn't", "won't", "would", "will"], "answer_index": 0, "explanation": "助動詞 'doesn't' は条件を表す", "retry": {"question": "If it ( ) rain tomorrow, we will go to the park.", "choices": ["doesn't", "didn't", "won't", "would", "will"], "answer_index": 0, "explanation": "助動詞 'doesn't' は条件を表す"}}, {"subject": "英語", "field": "比較級", "question": "He is ( ) at math than his sister.", "choices": ["good", "better", "best", "well", "goodly"], "answer_index": 1, "explanation": "比較級の形容詞 'good' - better", "retry": {"question": "He is ( ) at math than his sister.", "choices": ["good", "better", "best", "well", "goodly"], "answer_index": 1, "explanation": "比較級の形容詞 'good' - better"}}, {"subject": "英語", "field": "不定詞", "question": "I need ( ) practice my English every day.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞 'to' は目的を表す", "retry": {"question": "I need ( ) practice my English every day.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞 'to' は目的を表す"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by the famous actor last night.", "choices": ["perform", "performs", "performed", "performing", "was performed"], "answer_index": 4, "explanation": "受動態の過去分詞 'was performed' は、過去の完了の受動態を表す", "retry": {"question": "The play ( ) by the famous actor last night.", "choices": ["perform", "performs", "performed", "performing", "was performed"], "answer_index": 4, "explanation": "受動態の過去分詞 'was performed' は、過去の完了の受動態を表す"}}, {"subject": "英語", "field": "be動詞", "question": "It ( ) a nice day today.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 0, "explanation": "単数の主語 'It' に対する現在形の 'be' 動詞は 'is'", "retry": {"question": "It ( ) a nice day today.", "choices": ["is", "are", "am", "be", "been"], "answer_index": 0, "explanation": "単数の主語 'It' に対する現在形の 'be' 動詞は 'is'"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) attend the meeting if you want to know the details.", "choices": ["should", "must", "can", "will", "would"], "answer_index": 0, "explanation": "助動詞 'should' は勧めを表す", "retry": {"question": "You ( ) attend the meeting if you want to know the details.", "choices": ["should", "must", "can", "will", "would"], "answer_index": 0, "explanation": "助動詞 'should' は勧めを表す"}}];
+const LC=['a','b','c','d','e'];
+const NOTIFY_URL='https://script.google.com/macros/s/AKfycbyOa4De8zupkRe0tXU3lz18tWkPG4jg2HdVgUhFC_BnYrUDPqlvKCAS4Y4ccfEj8KWi/exec';
+const NOTIFY_SECRET='yuukeibotquiz2026';
+const DATE_STR='2026年5月26日(火)';
+const QUIZ_URL='https://kawakanpa.github.io/line-quiz-bot/quiz-2026-05-26.html';
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function init(){
+  let h='';
+  QS.forEach((q,i)=>{
+    const ch=q.choices.map((c,ci)=>`<label class="clabel" id="lbl-${i}-${ci}"><input type="radio" name="q${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    const rq=q.retry;
+    const rch=rq.choices.map((c,ci)=>`<label class="clabel" id="rlbl-${i}-${ci}"><input type="radio" name="rq${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    h+=`<div class="qcard" id="card-${i}">
+<div class="qhead"><span class="qnum">問${i+1}</span><span class="tag">${esc(q.subject)} / ${esc(q.field)}</span></div>
+<div class="qtext">${esc(q.question)}</div>
+<div id="ch-${i}">${ch}</div>
+<div class="resarea" id="res-${i}">
+  <div id="bdg-${i}"></div>
+  <div class="expl">${esc(q.explanation)}</div>
+  <div class="rbtns" id="rbtns-${i}">
+    <button class="btn btn-retry" onclick="showRetry(${i})">わかった！練習問題を解く 🔄</button>
+  </div>
+</div>
+<div class="retrybox" id="retry-${i}">
+  <h4>🔄 もう一度チャレンジ！</h4>
+  <div class="qtext">${esc(rq.question)}</div>
+  <div id="rch-${i}">${rch}</div>
+  <button class="btn-confirm" id="rcbtn-${i}" onclick="submitRetry(${i})">確認する</button>
+  <div class="rresult" id="rres-${i}">
+    <div id="rbdg-${i}"></div>
+    <div class="expl">${esc(rq.explanation)}</div>
+  </div>
+</div>
+</div>`;
+  });
+  document.getElementById('qlist').innerHTML=h;
+}
+function submitAll(){
+  const missing=QS.reduce((a,_,i)=>{if(!document.querySelector(`input[name="q${i}"]:checked`))a.push(i+1);return a;},[]);
+  if(missing.length){alert(`問${missing.join('、')}がまだ答えていません！`);return;}
+  let cor=0;
+  const resList=[];
+  QS.forEach((q,i)=>{
+    const sv=parseInt(document.querySelector(`input[name="q${i}"]:checked`).value);
+    const ok=sv===q.answer_index;
+    if(ok)cor++;
+    resList.push({num:i+1,subject:q.subject,field:q.field,correct:ok});
+    document.querySelectorAll(`#ch-${i} .clabel`).forEach((l,li)=>{
+      if(li===q.answer_index)l.classList.add('hl-ok');
+      else if(li===sv&&!ok)l.classList.add('hl-ng');
+    });
+    document.querySelectorAll(`input[name="q${i}"]`).forEach(r=>r.disabled=true);
+    document.getElementById(`bdg-${i}`).innerHTML=ok?
+      '<span class="badge-ok">✓ 正解！</span>':
+      `<span class="badge-ng">✗ 不正解（正解: ${LC[q.answer_index]}）</span>`;
+    document.getElementById(`res-${i}`).style.display='block';
+    document.getElementById(`card-${i}`).classList.add(ok?'ok':'ng');
+    if(ok){const rb=document.getElementById(`rbtns-${i}`);if(rb)rb.style.display='none';}
+  });
+  const sc=document.getElementById('scorecard');
+  const isPerfect=cor===QS.length;
+  const topMsg=isPerfect?'🎉 全問正解！':'✅ 回答完了！';
+  sc.innerHTML=`<div style="font-size:1.4em;font-weight:700;color:#2e7d32;margin-bottom:8px">${topMsg}</div><div class="score-num">${cor}<span style="font-size:.5em;color:#666"> / ${QS.length}</span></div><div class="score-sub">正解率 ${Math.round(cor/QS.length*100)}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
+  sc.style.display='block';
+  document.getElementById('subwrap').style.display='none';
+  sc.scrollIntoView({behavior:'smooth'});
+  sendResultsNotification(cor,resList);
+}
+function markOk(i){document.getElementById(`rbtns-${i}`).innerHTML='<span class="ok-msg">✓ 理解しました！</span>';}
+function showRetry(i){
+  document.getElementById(`retry-${i}`).style.display='block';
+  document.getElementById(`rbtns-${i}`).style.display='none';
+  document.getElementById(`retry-${i}`).scrollIntoView({behavior:'smooth'});
+}
+function submitRetry(i){
+  const rq=QS[i].retry;
+  const sel=document.querySelector(`input[name="rq${i}"]:checked`);
+  if(!sel){alert('答えを選んでください！');return;}
+  const sv=parseInt(sel.value);
+  const ok=sv===rq.answer_index;
+  document.querySelectorAll(`#rch-${i} .clabel`).forEach((l,li)=>{
+    if(li===rq.answer_index)l.classList.add('hl-ok');
+    else if(li===sv&&!ok)l.classList.add('hl-ng');
+  });
+  document.querySelectorAll(`input[name="rq${i}"]`).forEach(r=>r.disabled=true);
+  document.getElementById(`rbdg-${i}`).innerHTML=ok?
+    '<span class="badge-ok">✓ 正解！よくできました！</span>':
+    `<span class="badge-ng">✗ 不正解（正解: ${LC[rq.answer_index]}）</span>`;
+  document.getElementById(`rres-${i}`).style.display='block';
+  document.getElementById(`rcbtn-${i}`).style.display='none';
+}
+function sendResultsNotification(cor,resList){
+  if(!NOTIFY_URL)return;
+  const payload=JSON.stringify({secret:NOTIFY_SECRET,type:'results',date:DATE_STR,score:cor,total:QS.length,results:resList,quiz_url:QUIZ_URL});
+  fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:payload}).catch(()=>{});
+  if(cor===QS.length){
+    const p=JSON.stringify({secret:NOTIFY_SECRET,type:'perfect',date:DATE_STR,total:QS.length,quiz_url:QUIZ_URL});
+    setTimeout(()=>fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:p}).catch(()=>{}),500);
+  }
+}
+init();
+</script>
+</body>
+</html>
