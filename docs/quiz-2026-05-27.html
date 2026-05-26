@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>クイズ 2026年5月27日(水)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f0f4f8;color:#333;padding:12px;font-size:15px}
+.hdr{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:18px 16px;border-radius:14px;margin-bottom:16px;text-align:center;box-shadow:0 4px 12px rgba(46,125,50,.3)}
+.hdr h1{font-size:1.3em;margin-bottom:6px}
+.hdr p{font-size:.85em;opacity:.9}
+.score-card{display:none;background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.score-num{font-size:3em;font-weight:700;color:#2e7d32;line-height:1}
+.score-sub{color:#666;margin-top:6px;font-size:.9em}
+.qcard{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.qcard.ok{border-left:5px solid #43a047}
+.qcard.ng{border-left:5px solid #e53935}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qnum{font-weight:700;color:#2e7d32;font-size:1.05em}
+.tag{background:#e8f5e9;color:#1b5e20;padding:3px 10px;border-radius:20px;font-size:.78em}
+.qtext{line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.clabel{display:flex;align-items:flex-start;padding:10px 12px;border:2px solid #e0e0e0;border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;line-height:1.5}
+.clabel:hover{border-color:#43a047}
+.clabel input{margin-top:2px;margin-right:10px;flex-shrink:0}
+.hl-ok{background:#e8f5e9!important;border-color:#43a047!important}
+.hl-ng{background:#ffebee!important;border-color:#e53935!important}
+.resarea{display:none;margin-top:12px}
+.badge-ok{display:inline-block;background:#43a047;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.badge-ng{display:inline-block;background:#e53935;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.expl{background:#f9f9f9;border-left:4px solid #43a047;padding:10px 12px;border-radius:6px;font-size:.88em;line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.rbtns{display:flex;gap:8px}
+.btn{padding:10px 0;border:none;border-radius:10px;font-size:.9em;font-weight:700;cursor:pointer;flex:1;text-align:center}
+.btn-ok{background:#43a047;color:#fff}
+.btn-retry{background:#f4511e;color:#fff}
+.retrybox{display:none;background:#fff8e1;border:2px solid #ffb300;border-radius:12px;padding:14px;margin-top:12px}
+.retrybox h4{color:#e65100;margin-bottom:10px;font-size:.95em}
+.btn-confirm{display:block;width:100%;padding:11px;background:#1976d2;color:#fff;border:none;border-radius:10px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:10px}
+.rresult{display:none;margin-top:10px}
+.subwrap{text-align:center;padding:10px 0 24px}
+.btn-submit{background:#1976d2;color:#fff;padding:15px 48px;font-size:1.1em;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 12px rgba(25,118,210,.35)}
+.ok-msg{color:#43a047;font-weight:700;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>📚 今日のクイズ</h1>
+  <p>2026年5月27日(水) ／ 国語・英語 ／ 全49問</p>
+</div>
+<div id="scorecard" class="score-card"></div>
+<div id="qlist"></div>
+<div class="subwrap" id="subwrap">
+  <button class="btn-submit" onclick="submitAll()">答えを提出する</button>
+</div>
+<script>
+const QS=[{"subject": "国語", "field": "ことわざ・慣用句", "question": "雨降って地固まるはどれか", "choices": ["大雨の後に晴れる", "困難を乗り越えた後の安定", "人の関係が良くなる", "雨が降ると地面が硬くなる", "雨が降ると気温が下がる"], "answer_index": 1, "explanation": "雨降って地固まるは、困難を乗り越えた後の安定を表すことわざである。", "retry": {"question": "雨降って地固まるはどれか", "choices": ["大雨の後に晴れる", "困難を乗り越えた後の安定", "人の関係が良くなる", "雨が降ると地面が硬くなる", "雨が降ると気温が下がる"], "answer_index": 1, "explanation": "雨降って地固まるは、困難を乗り越えた後の安定を表すことわざである。"}}, {"subject": "国語", "field": "文法", "question": "次の文の「が」はどれか\n「彼が来ないのは残念だ」", "choices": ["主語を示す", "対象を限定する", "状況を説明する", "比較する", "時間を示す"], "answer_index": 0, "explanation": "この文の「が」は、主語「彼」を示す機能を持っている。", "retry": {"question": "次の文の「が」はどれか\n「彼が来ないのは残念だ」", "choices": ["主語を示す", "対象を限定する", "状況を説明する", "比較する", "時間を示す"], "answer_index": 0, "explanation": "この文の「が」は、主語「彼」を示す機能を持っている。"}}, {"subject": "国語", "field": "漢字", "question": "「発展」はどれか", "choices": ["成長する", "変化する", "独立する", "分解する", "伝統する"], "answer_index": 0, "explanation": "「発展」は、ものごとが成長したり進化したりすることを意味する。", "retry": {"question": "「発展」はどれか", "choices": ["成長する", "変化する", "独立する", "分解する", "伝統する"], "answer_index": 0, "explanation": "「発展」は、ものごとが成長したり進化したりすることを意味する。"}}, {"subject": "国語", "field": "文学作品", "question": "『吾輩は猫である』の作者はどれか", "choices": ["夏目漱石", "森鴎外", "芥川龍之介", "太宰治", "川端康成"], "answer_index": 0, "explanation": "『吾輩は猫である』は、夏目漱石によって書かれた小説である。", "retry": {"question": "『吾輩は猫である』の作者はどれか", "choices": ["夏目漱石", "森鴎外", "芥川龍之介", "太宰治", "川端康成"], "answer_index": 0, "explanation": "『吾輩は猫である』は、夏目漱石によって書かれた小説である。"}}, {"subject": "国語", "field": "ことわざ・慣用句", "question": "石の上にも三年はどれか", "choices": ["時間がたてば何事も上手になる", "時間がたてば何事も下手になる", "時間がたてば何事も簡単になる", "時間がたてば何事も難しくなる", "時間がたてば何事も意味がない"], "answer_index": 0, "explanation": "石の上にも三年は、時間がたてば何事も上手になることを表すことわざである。", "retry": {"question": "石の上にも三年はどれか", "choices": ["時間がたてば何事も上手になる", "時間がたてば何事も下手になる", "時間がたてば何事も簡単になる", "時間がたてば何事も難しくなる", "時間がたてば何事も意味がない"], "answer_index": 0, "explanation": "石の上にも三年は、時間がたてば何事も上手になることを表すことわざである。"}}, {"subject": "国語", "field": "文法", "question": "次の文の「て」はどれか\n「勉強して寝た」", "choices": ["原因を示す", "結果を示す", "時間を示す", "手段を示す", "連絡を示す"], "answer_index": 4, "explanation": "この文の「て」は、連絡を示す機能を持っている。", "retry": {"question": "次の文の「て」はどれか\n「勉強して寝た」", "choices": ["原因を示す", "結果を示す", "時間を示す", "手段を示す", "連絡を示す"], "answer_index": 4, "explanation": "この文の「て」は、連絡を示す機能を持っている。"}}, {"subject": "国語", "field": "漢字", "question": "「調査」はどれか", "choices": ["情報を収集する", "情報を分析する", "情報を保存する", "情報を破壊する", "情報を公開する"], "answer_index": 0, "explanation": "「調査」は、情報を収集することを意味する。", "retry": {"question": "「調査」はどれか", "choices": ["情報を収集する", "情報を分析する", "情報を保存する", "情報を破壊する", "情報を公開する"], "answer_index": 0, "explanation": "「調査」は、情報を収集することを意味する。"}}, {"subject": "国語", "field": "文学作品", "question": "『こころ』の作者はどれか", "choices": ["夏目漱石", "森鴎外", "芥川龍之介", "太宰治", "川端康成"], "answer_index": 0, "explanation": "『こころ』は、夏目漱石によって書かれた小説である。", "retry": {"question": "『こころ』の作者はどれか", "choices": ["夏目漱石", "森鴎外", "芥川龍之介", "太宰治", "川端康成"], "answer_index": 0, "explanation": "『こころ』は、夏目漱石によって書かれた小説である。"}}, {"subject": "国語", "field": "ことわざ・慣用句", "question": "二兎を追う者は一兎をも得ずはどれか", "choices": ["二つのことを同時にしようとする者は何もできない", "二つのことを同時にしようとする者は何も得る", "一つのことをしようとする者は何もできない", "一つのことをしようとする者は何も得る", "二つのことを同時にしようとしても何も得る"], "answer_index": 0, "explanation": "二兎を追う者は一兎をも得ずは、 二つのことを同時にしようとする者は何も得られないことを表すことわざである。", "retry": {"question": "二兎を追う者は一兎をも得ずはどれか", "choices": ["二つのことを同時にしようとする者は何もできない", "二つのことを同時にしようとする者は何も得る", "一つのことをしようとする者は何もできない", "一つのことをしようとする者は何も得る", "二つのことを同時にしようとしても何も得る"], "answer_index": 0, "explanation": "二兎を追う者は一兎をも得ずは、 二つのことを同時にしようとする者は何も得られないことを表すことわざである。"}}, {"subject": "国語", "field": "文法", "question": "次の文の「を」はどれか\n「本を読む」", "choices": ["主語を示す", "対象を示す", "状況を説明する", "比較する", "時間を示す"], "answer_index": 1, "explanation": "この文の「を」は、対象「本」を示す機能を持っている。", "retry": {"question": "次の文の「を」はどれか\n「本を読む」", "choices": ["主語を示す", "対象を示す", "状況を説明する", "比較する", "時間を示す"], "answer_index": 1, "explanation": "この文の「を」は、対象「本」を示す機能を持っている。"}}, {"subject": "国語", "field": "漢字", "question": "「貢献」はどれか", "choices": ["助ける", "贈る", "分ける", "使う", "作る"], "answer_index": 0, "explanation": "「貢献」は、助けることを意味する。", "retry": {"question": "「貢献」はどれか", "choices": ["助ける", "贈る", "分ける", "使う", "作る"], "answer_index": 0, "explanation": "「貢献」は、助けることを意味する。"}}, {"subject": "国語", "field": "文学作品", "question": "『銀河鉄道の夜』の作者はどれか", "choices": ["宮沢賢治", "太宰治", "川端康成", "芥川龍之介", "森鴎外"], "answer_index": 0, "explanation": "『銀河鉄道の夜』は、宮沢賢治によって書かれた小説である。", "retry": {"question": "『銀河鉄道の夜』の作者はどれか", "choices": ["宮沢賢治", "太宰治", "川端康成", "芥川龍之介", "森鴎外"], "answer_index": 0, "explanation": "『銀河鉄道の夜』は、宮沢賢治によって書かれた小説である。"}}, {"subject": "国語", "field": "ことわざ・慣用句", "question": "不器用な親は、用心深い子に会うはどれか", "choices": ["親のことを考えない子", "親が子に尽くす", "親が子に尽くさない", "親が子に尽くす子"], "answer_index": 2, "explanation": "不器用な親は、用心深い子に会うは、 親が子に尽くすことを表すことわざである。", "retry": {"question": "不器用な親は、用心深い子に会うはどれか", "choices": ["親のことを考えない子", "親が子に尽くす", "親が子に尽くさない", "親が子に尽くす子"], "answer_index": 2, "explanation": "不器用な親は、用心深い子に会うは、 親が子に尽くすことを表すことわざである。"}}, {"subject": "国語", "field": "文法", "question": "次の文の「に」はどれか\n「東京に行く」", "choices": ["主語を示す", "時間を示す", "場所を示す", "方向を示す", "手段を示す"], "answer_index": 3, "explanation": "この文の「に」は、方向「東京」を示す機能を持っている。", "retry": {"question": "次の文の「に」はどれか\n「東京に行く」", "choices": ["主語を示す", "時間を示す", "場所を示す", "方向を示す", "手段を示す"], "answer_index": 3, "explanation": "この文の「に」は、方向「東京」を示す機能を持っている。"}}, {"subject": "国語", "field": "漢字", "question": "「表現」はどれか", "choices": ["感情を表す", "感情を隠す", "思いを伝える", "思いを隠す", "感情を強調する"], "answer_index": 0, "explanation": "「表現」は、感情を表すことを意味する。", "retry": {"question": "「表現」はどれか", "choices": ["感情を表す", "感情を隠す", "思いを伝える", "思いを隠す", "感情を強調する"], "answer_index": 0, "explanation": "「表現」は、感情を表すことを意味する。"}}, {"subject": "国語", "field": "文学作品", "question": "『人間失格』の作者はどれか", "choices": ["太宰治", "夏目漱石", "森鴎外", "芥川龍之介", "川端康成"], "answer_index": 0, "explanation": "『人間失格』は、太宰治によって書かれた小説である。", "retry": {"question": "『人間失格』の作者はどれか", "choices": ["太宰治", "夏目漱石", "森鴎外", "芥川龍之介", "川端康成"], "answer_index": 0, "explanation": "『人間失格』は、太宰治によって書かれた小説である。"}}, {"subject": "国語", "field": "ことわざ・慣用句", "question": "雨降り台風の後はどれか", "choices": ["何事も起こらない", "何事も起こる", "天気がよくなる", "天気が悪くなる", "何も変わらない"], "answer_index": 2, "explanation": "雨降り台風の後は、天気がよくなることを表すことわざである。", "retry": {"question": "雨降り台風の後はどれか", "choices": ["何事も起こらない", "何事も起こる", "天気がよくなる", "天気が悪くなる", "何も変わらない"], "answer_index": 2, "explanation": "雨降り台風の後は、天気がよくなることを表すことわざである。"}}, {"subject": "国語", "field": "文法", "question": "次の文の「から」はどれか\n「9時から来ます」", "choices": ["原因を示す", "結果を示す", "時間を示す", "場所を示す", "手段を示す"], "answer_index": 2, "explanation": "この文の「から」は、時間「9時」を示す機能を持っている。", "retry": {"question": "次の文の「から」はどれか\n「9時から来ます」", "choices": ["原因を示す", "結果を示す", "時間を示す", "場所を示す", "手段を示す"], "answer_index": 2, "explanation": "この文の「から」は、時間「9時」を示す機能を持っている。"}}, {"subject": "国語", "field": "漢字", "question": "「分析」はどれか", "choices": ["分解する", "結合する", "比較する", "説明する", "表現する"], "answer_index": 0, "explanation": "「分析」は、分解することを意味する。", "retry": {"question": "「分析」はどれか", "choices": ["分解する", "結合する", "比較する", "説明する", "表現する"], "answer_index": 0, "explanation": "「分析」は、分解することを意味する。"}}, {"subject": "国語", "field": "文学作品", "question": "『風の又三郎』の作者はどれか", "choices": ["宮沢賢治", "太宰治", "川端康成", "芥川龍之介", "森鴎外"], "answer_index": 0, "explanation": "『風の又三郎』は、宮沢賢治によって書かれた小説である。", "retry": {"question": "『風の又三郎』の作者はどれか", "choices": ["宮沢賢治", "太宰治", "川端康成", "芥川龍之介", "森鴎外"], "answer_index": 0, "explanation": "『風の又三郎』は、宮沢賢治によって書かれた小説である。"}}, {"subject": "国語", "field": "ことわざ・慣用句", "question": "一石二鳥はどれか", "choices": ["一つのことだけをする", "二つのことを同時にできない", "二つのことを同時にできる", "二つのことを同時にしない", "一つのことだけしない"], "answer_index": 2, "explanation": "一石二鳥は、二つのことを同時にできることを表すことわざである。", "retry": {"question": "一石二鳥はどれか", "choices": ["一つのことだけをする", "二つのことを同時にできない", "二つのことを同時にできる", "二つのことを同時にしない", "一つのことだけしない"], "answer_index": 2, "explanation": "一石二鳥は、二つのことを同時にできることを表すことわざである。"}}, {"subject": "国語", "field": "文法", "question": "次の文の「を」はどれか\n「彼女を助ける」", "choices": ["主語を示す", "対象を示す", "状況を説明する", "比較する", "時間を示す"], "answer_index": 1, "explanation": "この文の「を」は、対象「彼女」を示す機能を持っている。", "retry": {"question": "次の文の「を」はどれか\n「彼女を助ける」", "choices": ["主語を示す", "対象を示す", "状況を説明する", "比較する", "時間を示す"], "answer_index": 1, "explanation": "この文の「を」は、対象「彼女」を示す機能を持っている。"}}, {"subject": "国語", "field": "漢字", "question": "「構造」はどれか", "choices": ["構成する", "分解する", "比較する", "説明する", "表現する"], "answer_index": 0, "explanation": "「構造」は、構成することを意味する。", "retry": {"question": "「構造」はどれか", "choices": ["構成する", "分解する", "比較する", "説明する", "表現する"], "answer_index": 0, "explanation": "「構造」は、構成することを意味する。"}}, {"subject": "国語", "field": "文学作品", "question": "『注文の多い料理店』の作者はどれか", "choices": ["宮沢賢治", "太宰治", "川端康成", "芥川龍之介", "森鴎外"], "answer_index": 3, "explanation": "『注文の多い料理店』は、芥川龍之介によって書かれた小説である。", "retry": {"question": "『注文の多い料理店』の作者はどれか", "choices": ["宮沢賢治", "太宰治", "川端康成", "芥川龍之介", "森鴎外"], "answer_index": 3, "explanation": "『注文の多い料理店』は、芥川龍之介によって書かれた小説である。"}}, {"subject": "英語", "field": "比較級", "question": "My brother is ( ) than me.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。", "retry": {"question": "My brother is ( ) than me.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to travel around the world.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の原形にtoを付けたものです。", "retry": {"question": "I want ( ) to travel around the world.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の原形にtoを付けたものです。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by a famous director.", "choices": ["direct", "directed", "directs", "directing", "was directed"], "answer_index": 4, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。", "retry": {"question": "The play ( ) by a famous director.", "choices": ["direct", "directed", "directs", "directing", "was directed"], "answer_index": 4, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は、主語の人称や数に応じて変化します。", "retry": {"question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は、主語の人称や数に応じて変化します。"}}, {"subject": "英語", "field": "助動詞", "question": "I ( ) go to the party if I had time.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。", "retry": {"question": "I ( ) go to the party if I had time.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。"}}, {"subject": "英語", "field": "比較級", "question": "This is ( ) book I've ever read.", "choices": ["good", "better", "best", "more good", "most good"], "answer_index": 2, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。", "retry": {"question": "This is ( ) book I've ever read.", "choices": ["good", "better", "best", "more good", "most good"], "answer_index": 2, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listener"], "answer_index": 1, "explanation": "不定詞は、動詞の原形にtoを付けたものです。", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listener"], "answer_index": 1, "explanation": "不定詞は、動詞の原形にtoを付けたものです。"}}, {"subject": "英語", "field": "受動態", "question": "The cake ( ) by my mother.", "choices": ["make", "made", "makes", "making", "was made"], "answer_index": 4, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。", "retry": {"question": "The cake ( ) by my mother.", "choices": ["make", "made", "makes", "making", "was made"], "answer_index": 4, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) from Tokyo.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "be動詞は、主語の人称や数に応じて変化します。", "retry": {"question": "They ( ) from Tokyo.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "be動詞は、主語の人称や数に応じて変化します。"}}, {"subject": "英語", "field": "助動詞", "question": "I ( ) speak English fluently if I practiced every day.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。", "retry": {"question": "I ( ) speak English fluently if I practiced every day.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。"}}, {"subject": "英語", "field": "比較級", "question": "She is ( ) singer in the world.", "choices": ["good", "better", "best", "more good", "most good"], "answer_index": 2, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。", "retry": {"question": "She is ( ) singer in the world.", "choices": ["good", "better", "best", "more good", "most good"], "answer_index": 2, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) a car.", "choices": ["to buy", "buying", "buy", "bought", "buyer"], "answer_index": 0, "explanation": "不定詞は、動詞の原形にtoを付けたものです。", "retry": {"question": "I want ( ) a car.", "choices": ["to buy", "buying", "buy", "bought", "buyer"], "answer_index": 0, "explanation": "不定詞は、動詞の原形にtoを付けたものです。"}}, {"subject": "英語", "field": "受動態", "question": "The picture ( ) by a famous artist.", "choices": ["paint", "painted", "paints", "painting", "was painted"], "answer_index": 4, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。", "retry": {"question": "The picture ( ) by a famous artist.", "choices": ["paint", "painted", "paints", "painting", "was painted"], "answer_index": 4, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a doctor.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は、主語の人称や数に応じて変化します。", "retry": {"question": "He ( ) a doctor.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は、主語の人称や数に応じて変化します。"}}, {"subject": "英語", "field": "助動詞", "question": "I ( ) go to the movies if I had money.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。", "retry": {"question": "I ( ) go to the movies if I had money.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。"}}, {"subject": "英語", "field": "比較級", "question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。", "retry": {"question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) swimming.", "choices": ["to", "swimming", "swim", "swam", "swims"], "answer_index": 1, "explanation": "不定詞は、動詞の原形にtoを付けたものです。", "retry": {"question": "I love ( ) swimming.", "choices": ["to", "swimming", "swim", "swam", "swims"], "answer_index": 1, "explanation": "不定詞は、動詞の原形にtoを付けたものです。"}}, {"subject": "英語", "field": "受動態", "question": "The book ( ) by many people.", "choices": ["read", "reads", "reading", "was read", "has been read"], "answer_index": 3, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。", "retry": {"question": "The book ( ) by many people.", "choices": ["read", "reads", "reading", "was read", "has been read"], "answer_index": 3, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) from America.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "be動詞は、主語の人称や数に応じて変化します。", "retry": {"question": "They ( ) from America.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "be動詞は、主語の人称や数に応じて変化します。"}}, {"subject": "英語", "field": "助動詞", "question": "I ( ) speak Japanese if I studied harder.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。", "retry": {"question": "I ( ) speak Japanese if I studied harder.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。"}}, {"subject": "英語", "field": "比較級", "question": "He is ( ) player on the team.", "choices": ["good", "better", "best", "more good", "most good"], "answer_index": 2, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。", "retry": {"question": "He is ( ) player on the team.", "choices": ["good", "better", "best", "more good", "most good"], "answer_index": 2, "explanation": "比較級は、形容詞の前または後ろにmoreまたはlessを付けたり、形容詞の最後にerまたはierを付けたりして作ります。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) travel around the world.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の原形にtoを付けたものです。", "retry": {"question": "I want ( ) travel around the world.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の原形にtoを付けたものです。"}}, {"subject": "英語", "field": "受動態", "question": "The food ( ) by a famous chef.", "choices": ["cook", "cooked", "cooks", "cooking", "was cooked"], "answer_index": 4, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。", "retry": {"question": "The food ( ) by a famous chef.", "choices": ["cook", "cooked", "cooks", "cooking", "was cooked"], "answer_index": 4, "explanation": "受動態は、動詞の過去分詞にbe動詞を付けたものです。"}}, {"subject": "英語", "field": "be動詞", "question": "She ( ) a teacher.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は、主語の人称や数に応じて変化します。", "retry": {"question": "She ( ) a teacher.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は、主語の人称や数に応じて変化します。"}}, {"subject": "英語", "field": "助動詞", "question": "I ( ) go to the store if I needed something.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。", "retry": {"question": "I ( ) go to the store if I needed something.", "choices": ["can", "should", "will", "would", "must"], "answer_index": 3, "explanation": "助動詞は、動詞の前について動詞の時制や相を示します。"}}];
+const LC=['a','b','c','d','e'];
+const NOTIFY_URL='https://script.google.com/macros/s/AKfycbyOa4De8zupkRe0tXU3lz18tWkPG4jg2HdVgUhFC_BnYrUDPqlvKCAS4Y4ccfEj8KWi/exec';
+const NOTIFY_SECRET='yuukeibotquiz2026';
+const DATE_STR='2026年5月27日(水)';
+const QUIZ_URL='https://kawakanpa.github.io/line-quiz-bot/quiz-2026-05-27.html';
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function init(){
+  let h='';
+  QS.forEach((q,i)=>{
+    const ch=q.choices.map((c,ci)=>`<label class="clabel" id="lbl-${i}-${ci}"><input type="radio" name="q${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    const rq=q.retry;
+    const rch=rq.choices.map((c,ci)=>`<label class="clabel" id="rlbl-${i}-${ci}"><input type="radio" name="rq${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    h+=`<div class="qcard" id="card-${i}">
+<div class="qhead"><span class="qnum">問${i+1}</span><span class="tag">${esc(q.subject)} / ${esc(q.field)}</span></div>
+<div class="qtext">${esc(q.question)}</div>
+<div id="ch-${i}">${ch}</div>
+<div class="resarea" id="res-${i}">
+  <div id="bdg-${i}"></div>
+  <div class="expl">${esc(q.explanation)}</div>
+  <div class="rbtns" id="rbtns-${i}">
+    <button class="btn btn-retry" onclick="showRetry(${i})">わかった！練習問題を解く 🔄</button>
+  </div>
+</div>
+<div class="retrybox" id="retry-${i}">
+  <h4>🔄 もう一度チャレンジ！</h4>
+  <div class="qtext">${esc(rq.question)}</div>
+  <div id="rch-${i}">${rch}</div>
+  <button class="btn-confirm" id="rcbtn-${i}" onclick="submitRetry(${i})">確認する</button>
+  <div class="rresult" id="rres-${i}">
+    <div id="rbdg-${i}"></div>
+    <div class="expl">${esc(rq.explanation)}</div>
+  </div>
+</div>
+</div>`;
+  });
+  document.getElementById('qlist').innerHTML=h;
+}
+function submitAll(){
+  const missing=QS.reduce((a,_,i)=>{if(!document.querySelector(`input[name="q${i}"]:checked`))a.push(i+1);return a;},[]);
+  if(missing.length){alert(`問${missing.join('、')}がまだ答えていません！`);return;}
+  let cor=0;
+  const resList=[];
+  QS.forEach((q,i)=>{
+    const sv=parseInt(document.querySelector(`input[name="q${i}"]:checked`).value);
+    const ok=sv===q.answer_index;
+    if(ok)cor++;
+    resList.push({num:i+1,subject:q.subject,field:q.field,correct:ok});
+    document.querySelectorAll(`#ch-${i} .clabel`).forEach((l,li)=>{
+      if(li===q.answer_index)l.classList.add('hl-ok');
+      else if(li===sv&&!ok)l.classList.add('hl-ng');
+    });
+    document.querySelectorAll(`input[name="q${i}"]`).forEach(r=>r.disabled=true);
+    document.getElementById(`bdg-${i}`).innerHTML=ok?
+      '<span class="badge-ok">✓ 正解！</span>':
+      `<span class="badge-ng">✗ 不正解（正解: ${LC[q.answer_index]}）</span>`;
+    document.getElementById(`res-${i}`).style.display='block';
+    document.getElementById(`card-${i}`).classList.add(ok?'ok':'ng');
+    if(ok){const rb=document.getElementById(`rbtns-${i}`);if(rb)rb.style.display='none';}
+  });
+  const sc=document.getElementById('scorecard');
+  const isPerfect=cor===QS.length;
+  const topMsg=isPerfect?'🎉 全問正解！':'✅ 回答完了！';
+  sc.innerHTML=`<div style="font-size:1.4em;font-weight:700;color:#2e7d32;margin-bottom:8px">${topMsg}</div><div class="score-num">${cor}<span style="font-size:.5em;color:#666"> / ${QS.length}</span></div><div class="score-sub">正解率 ${Math.round(cor/QS.length*100)}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
+  sc.style.display='block';
+  document.getElementById('subwrap').style.display='none';
+  sc.scrollIntoView({behavior:'smooth'});
+  sendResultsNotification(cor,resList);
+}
+function markOk(i){document.getElementById(`rbtns-${i}`).innerHTML='<span class="ok-msg">✓ 理解しました！</span>';}
+function showRetry(i){
+  document.getElementById(`retry-${i}`).style.display='block';
+  document.getElementById(`rbtns-${i}`).style.display='none';
+  document.getElementById(`retry-${i}`).scrollIntoView({behavior:'smooth'});
+}
+function submitRetry(i){
+  const rq=QS[i].retry;
+  const sel=document.querySelector(`input[name="rq${i}"]:checked`);
+  if(!sel){alert('答えを選んでください！');return;}
+  const sv=parseInt(sel.value);
+  const ok=sv===rq.answer_index;
+  document.querySelectorAll(`#rch-${i} .clabel`).forEach((l,li)=>{
+    if(li===rq.answer_index)l.classList.add('hl-ok');
+    else if(li===sv&&!ok)l.classList.add('hl-ng');
+  });
+  document.querySelectorAll(`input[name="rq${i}"]`).forEach(r=>r.disabled=true);
+  document.getElementById(`rbdg-${i}`).innerHTML=ok?
+    '<span class="badge-ok">✓ 正解！よくできました！</span>':
+    `<span class="badge-ng">✗ 不正解（正解: ${LC[rq.answer_index]}）</span>`;
+  document.getElementById(`rres-${i}`).style.display='block';
+  document.getElementById(`rcbtn-${i}`).style.display='none';
+}
+function sendResultsNotification(cor,resList){
+  if(!NOTIFY_URL)return;
+  const payload=JSON.stringify({secret:NOTIFY_SECRET,type:'results',date:DATE_STR,score:cor,total:QS.length,results:resList,quiz_url:QUIZ_URL});
+  fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:payload}).catch(()=>{});
+  if(cor===QS.length){
+    const p=JSON.stringify({secret:NOTIFY_SECRET,type:'perfect',date:DATE_STR,total:QS.length,quiz_url:QUIZ_URL});
+    setTimeout(()=>fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:p}).catch(()=>{}),500);
+  }
+}
+init();
+</script>
+</body>
+</html>
