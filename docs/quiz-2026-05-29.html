@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>クイズ 2026年5月29日(金)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f0f4f8;color:#333;padding:12px;font-size:15px}
+.hdr{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:18px 16px;border-radius:14px;margin-bottom:16px;text-align:center;box-shadow:0 4px 12px rgba(46,125,50,.3)}
+.hdr h1{font-size:1.3em;margin-bottom:6px}
+.hdr p{font-size:.85em;opacity:.9}
+.score-card{display:none;background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.score-num{font-size:3em;font-weight:700;color:#2e7d32;line-height:1}
+.score-sub{color:#666;margin-top:6px;font-size:.9em}
+.qcard{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.qcard.ok{border-left:5px solid #43a047}
+.qcard.ng{border-left:5px solid #e53935}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qnum{font-weight:700;color:#2e7d32;font-size:1.05em}
+.tag{background:#e8f5e9;color:#1b5e20;padding:3px 10px;border-radius:20px;font-size:.78em}
+.qtext{line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.clabel{display:flex;align-items:flex-start;padding:10px 12px;border:2px solid #e0e0e0;border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;line-height:1.5}
+.clabel:hover{border-color:#43a047}
+.clabel input{margin-top:2px;margin-right:10px;flex-shrink:0}
+.hl-ok{background:#e8f5e9!important;border-color:#43a047!important}
+.hl-ng{background:#ffebee!important;border-color:#e53935!important}
+.resarea{display:none;margin-top:12px}
+.badge-ok{display:inline-block;background:#43a047;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.badge-ng{display:inline-block;background:#e53935;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.expl{background:#f9f9f9;border-left:4px solid #43a047;padding:10px 12px;border-radius:6px;font-size:.88em;line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.rbtns{display:flex;gap:8px}
+.btn{padding:10px 0;border:none;border-radius:10px;font-size:.9em;font-weight:700;cursor:pointer;flex:1;text-align:center}
+.btn-ok{background:#43a047;color:#fff}
+.btn-retry{background:#f4511e;color:#fff}
+.retrybox{display:none;background:#fff8e1;border:2px solid #ffb300;border-radius:12px;padding:14px;margin-top:12px}
+.retrybox h4{color:#e65100;margin-bottom:10px;font-size:.95em}
+.btn-confirm{display:block;width:100%;padding:11px;background:#1976d2;color:#fff;border:none;border-radius:10px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:10px}
+.rresult{display:none;margin-top:10px}
+.subwrap{text-align:center;padding:10px 0 24px}
+.btn-submit{background:#1976d2;color:#fff;padding:15px 48px;font-size:1.1em;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 12px rgba(25,118,210,.35)}
+.ok-msg{color:#43a047;font-weight:700;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>📚 今日のクイズ</h1>
+  <p>2026年5月29日(金) ／ 理科・英語 ／ 全49問</p>
+</div>
+<div id="scorecard" class="score-card"></div>
+<div id="qlist"></div>
+<div class="subwrap" id="subwrap">
+  <button class="btn-submit" onclick="submitAll()">答えを提出する</button>
+</div>
+<script>
+const QS=[{"subject": "理科", "field": "物理", "question": "電流が2Aの電線に、電圧が6Vの電源を接続したとき、抵抗はどれか", "choices": ["1オーム", "2オーム", "3オーム", "4オーム", "6オーム"], "answer_index": 2, "explanation": "オームの法則により、抵抗は電圧÷電流で求められ、6V÷2A=3オームとなる", "retry": {"question": "電流が2Aの電線に、電圧が6Vの電源を接続したとき、抵抗はどれか", "choices": ["1オーム", "2オーム", "3オーム", "4オーム", "6オーム"], "answer_index": 2, "explanation": "オームの法則により、抵抗は電圧÷電流で求められ、6V÷2A=3オームとなる"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が3kg、体積が0.5m³のとき、密度はどれか", "choices": ["2kg/m³", "4kg/m³", "6kg/m³", "8kg/m³", "10kg/m³"], "answer_index": 2, "explanation": "密度は質量÷体積で求められ、3kg÷0.5m³=6kg/m³となる", "retry": {"question": "物体の質量が3kg、体積が0.5m³のとき、密度はどれか", "choices": ["2kg/m³", "4kg/m³", "6kg/m³", "8kg/m³", "10kg/m³"], "answer_index": 2, "explanation": "密度は質量÷体積で求められ、3kg÷0.5m³=6kg/m³となる"}}, {"subject": "理科", "field": "物理", "question": "物体が10m/sの速さで移動しているとき、2秒で移動する距離はどれか", "choices": ["10m", "15m", "20m", "25m", "30m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、10m/s×2s=20mとなる", "retry": {"question": "物体が10m/sの速さで移動しているとき、2秒で移動する距離はどれか", "choices": ["10m", "15m", "20m", "25m", "30m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、10m/s×2s=20mとなる"}}, {"subject": "理科", "field": "化学", "question": "水の組成式はどれか", "choices": ["H₂O", "H₂O₂", "HO", "H₃O", "H₄O"], "answer_index": 0, "explanation": "水の組成式はH₂Oである", "retry": {"question": "水の組成式はどれか", "choices": ["H₂O", "H₂O₂", "HO", "H₃O", "H₄O"], "answer_index": 0, "explanation": "水の組成式はH₂Oである"}}, {"subject": "理科", "field": "化学", "question": "二酸化炭素の組成式はどれか", "choices": ["CO", "CO₂", "CO₃", "C₂O", "C₂O₂"], "answer_index": 1, "explanation": "二酸化炭素の組成式はCO₂である", "retry": {"question": "二酸化炭素の組成式はどれか", "choices": ["CO", "CO₂", "CO₃", "C₂O", "C₂O₂"], "answer_index": 1, "explanation": "二酸化炭素の組成式はCO₂である"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が2kg、加速度が4m/s²のとき、作用する力はどれか", "choices": ["2N", "4N", "6N", "8N", "10N"], "answer_index": 3, "explanation": "力は質量×加速度で求められ、2kg×4m/s²=8Nとなる", "retry": {"question": "物体の質量が2kg、加速度が4m/s²のとき、作用する力はどれか", "choices": ["2N", "4N", "6N", "8N", "10N"], "answer_index": 3, "explanation": "力は質量×加速度で求められ、2kg×4m/s²=8Nとなる"}}, {"subject": "理科", "field": "物理", "question": "電流が3Aの電線に、電圧が9Vの電源を接続したとき、抵抗はどれか", "choices": ["1オーム", "2オーム", "3オーム", "4オーム", "6オーム"], "answer_index": 2, "explanation": "オームの法則により、抵抗は電圧÷電流で求められ、9V÷3A=3オームとなる", "retry": {"question": "電流が3Aの電線に、電圧が9Vの電源を接続したとき、抵抗はどれか", "choices": ["1オーム", "2オーム", "3オーム", "4オーム", "6オーム"], "answer_index": 2, "explanation": "オームの法則により、抵抗は電圧÷電流で求められ、9V÷3A=3オームとなる"}}, {"subject": "理科", "field": "化学", "question": "酸素の組成式はどれか", "choices": ["O", "O₂", "O₃", "O₄", "O₅"], "answer_index": 1, "explanation": "酸素の組成式はO₂である", "retry": {"question": "酸素の組成式はどれか", "choices": ["O", "O₂", "O₃", "O₄", "O₅"], "answer_index": 1, "explanation": "酸素の組成式はO₂である"}}, {"subject": "理科", "field": "物理", "question": "物体が5m/sの速さで移動しているとき、3秒で移動する距離はどれか", "choices": ["10m", "12m", "15m", "18m", "20m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、5m/s×3s=15mとなる", "retry": {"question": "物体が5m/sの速さで移動しているとき、3秒で移動する距離はどれか", "choices": ["10m", "12m", "15m", "18m", "20m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、5m/s×3s=15mとなる"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が4kg、体積が1m³のとき、密度はどれか", "choices": ["2kg/m³", "3kg/m³", "4kg/m³", "5kg/m³", "6kg/m³"], "answer_index": 2, "explanation": "密度は質量÷体積で求められ、4kg÷1m³=4kg/m³となる", "retry": {"question": "物体の質量が4kg、体積が1m³のとき、密度はどれか", "choices": ["2kg/m³", "3kg/m³", "4kg/m³", "5kg/m³", "6kg/m³"], "answer_index": 2, "explanation": "密度は質量÷体積で求められ、4kg÷1m³=4kg/m³となる"}}, {"subject": "理科", "field": "化学", "question": "炭素の組成式はどれか", "choices": ["C", "C₂", "C₃", "C₄", "C₅"], "answer_index": 0, "explanation": "炭素の組成式はCである", "retry": {"question": "炭素の組成式はどれか", "choices": ["C", "C₂", "C₃", "C₄", "C₅"], "answer_index": 0, "explanation": "炭素の組成式はCである"}}, {"subject": "理科", "field": "物理", "question": "電流が1Aの電線に、電圧が3Vの電源を接続したとき、抵抗はどれか", "choices": ["1オーム", "2オーム", "3オーム", "4オーム", "6オーム"], "answer_index": 2, "explanation": "オームの法則により、抵抗は電圧÷電流で求められ、3V÷1A=3オームとなる", "retry": {"question": "電流が1Aの電線に、電圧が3Vの電源を接続したとき、抵抗はどれか", "choices": ["1オーム", "2オーム", "3オーム", "4オーム", "6オーム"], "answer_index": 2, "explanation": "オームの法則により、抵抗は電圧÷電流で求められ、3V÷1A=3オームとなる"}}, {"subject": "理科", "field": "化学", "question": "水素の組成式はどれか", "choices": ["H", "H₂", "H₃", "H₄", "H₅"], "answer_index": 1, "explanation": "水素の組成式はH₂である", "retry": {"question": "水素の組成式はどれか", "choices": ["H", "H₂", "H₃", "H₄", "H₅"], "answer_index": 1, "explanation": "水素の組成式はH₂である"}}, {"subject": "理科", "field": "物理", "question": "物体が10m/sの速さで移動しているとき、1.5秒で移動する距離はどれか", "choices": ["10m", "12m", "15m", "18m", "20m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、10m/s×1.5s=15mとなる", "retry": {"question": "物体が10m/sの速さで移動しているとき、1.5秒で移動する距離はどれか", "choices": ["10m", "12m", "15m", "18m", "20m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、10m/s×1.5s=15mとなる"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が5kg、加速度が2m/s²のとき、作用する力はどれか", "choices": ["5N", "8N", "10N", "12N", "15N"], "answer_index": 2, "explanation": "力は質量×加速度で求められ、5kg×2m/s²=10Nとなる", "retry": {"question": "物体の質量が5kg、加速度が2m/s²のとき、作用する力はどれか", "choices": ["5N", "8N", "10N", "12N", "15N"], "answer_index": 2, "explanation": "力は質量×加速度で求められ、5kg×2m/s²=10Nとなる"}}, {"subject": "理科", "field": "化学", "question": "二酸化窒素の組成式はどれか", "choices": ["NO", "NO₂", "NO₃", "N₂O", "N₂O₂"], "answer_index": 1, "explanation": "二酸化窒素の組成式はNO₂である", "retry": {"question": "二酸化窒素の組成式はどれか", "choices": ["NO", "NO₂", "NO₃", "N₂O", "N₂O₂"], "answer_index": 1, "explanation": "二酸化窒素の組成式はNO₂である"}}, {"subject": "理科", "field": "物理", "question": "物体が8m/sの速さで移動しているとき、2秒で移動する距離はどれか", "choices": ["10m", "12m", "16m", "18m", "20m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、8m/s×2s=16mとなる", "retry": {"question": "物体が8m/sの速さで移動しているとき、2秒で移動する距離はどれか", "choices": ["10m", "12m", "16m", "18m", "20m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、8m/s×2s=16mとなる"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が3kg、体積が1.5m³のとき、密度はどれか", "choices": ["1kg/m³", "2kg/m³", "3kg/m³", "4kg/m³", "6kg/m³"], "answer_index": 2, "explanation": "密度は質量÷体積で求められ、3kg÷1.5m³=2kg/m³となるが、質量÷体積=2kg/m³なので、質量と体積から密度を求める場合、3kg÷1.5m³=2kg/m³となる", "retry": {"question": "物体の質量が3kg、体積が1.5m³のとき、密度はどれか", "choices": ["1kg/m³", "2kg/m³", "3kg/m³", "4kg/m³", "6kg/m³"], "answer_index": 2, "explanation": "密度は質量÷体積で求められ、3kg÷1.5m³=2kg/m³となるが、質量÷体積=2kg/m³なので、質量と体積から密度を求める場合、3kg÷1.5m³=2kg/m³となる"}}, {"subject": "理科", "field": "化学", "question": "塩化ナトリウムの組成式はどれか", "choices": ["NaCl", "NaCl₂", "Na₂Cl", "Na₂Cl₂", "NaCl₃"], "answer_index": 0, "explanation": "塩化ナトリウムの組成式はNaClである", "retry": {"question": "塩化ナトリウムの組成式はどれか", "choices": ["NaCl", "NaCl₂", "Na₂Cl", "Na₂Cl₂", "NaCl₃"], "answer_index": 0, "explanation": "塩化ナトリウムの組成式はNaClである"}}, {"subject": "理科", "field": "物理", "question": "電流が4Aの電線に、電圧が12Vの電源を接続したとき、抵抗はどれか", "choices": ["1オーム", "2オーム", "3オーム", "4オーム", "6オーム"], "answer_index": 2, "explanation": "オームの法則により、抵抗は電圧÷電流で求められ、12V÷4A=3オームとなる", "retry": {"question": "電流が4Aの電線に、電圧が12Vの電源を接続したとき、抵抗はどれか", "choices": ["1オーム", "2オーム", "3オーム", "4オーム", "6オーム"], "answer_index": 2, "explanation": "オームの法則により、抵抗は電圧÷電流で求められ、12V÷4A=3オームとなる"}}, {"subject": "理科", "field": "化学", "question": "硫酸の組成式はどれか", "choices": ["H₂SO₃", "H₂SO₄", "H₂SO₅", "H₂S₂O₄", "H₂S₂O₆"], "answer_index": 1, "explanation": "硫酸の組成式はH₂SO₄である", "retry": {"question": "硫酸の組成式はどれか", "choices": ["H₂SO₃", "H₂SO₄", "H₂SO₅", "H₂S₂O₄", "H₂S₂O₆"], "answer_index": 1, "explanation": "硫酸の組成式はH₂SO₄である"}}, {"subject": "理科", "field": "物理", "question": "物体が12m/sの速さで移動しているとき、1秒で移動する距離はどれか", "choices": ["8m", "10m", "12m", "15m", "20m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、12m/s×1s=12mとなる", "retry": {"question": "物体が12m/sの速さで移動しているとき、1秒で移動する距離はどれか", "choices": ["8m", "10m", "12m", "15m", "20m"], "answer_index": 2, "explanation": "距離は速さ×時間で求められ、12m/s×1s=12mとなる"}}, {"subject": "理科", "field": "物理", "question": "物体の質量が6kg、加速度が3m/s²のとき、作用する力はどれか", "choices": ["10N", "12N", "15N", "18N", "20N"], "answer_index": 3, "explanation": "力は質量×加速度で求められ、6kg×3m/s²=18Nとなる", "retry": {"question": "物体の質量が6kg、加速度が3m/s²のとき、作用する力はどれか", "choices": ["10N", "12N", "15N", "18N", "20N"], "answer_index": 3, "explanation": "力は質量×加速度で求められ、6kg×3m/s²=18Nとなる"}}, {"subject": "理科", "field": "化学", "question": "炭酸カルシウムの組成式はどれか", "choices": ["CaCO", "CaCO₂", "CaCO₃", "Ca(CO)₂", "Ca(CO)₃"], "answer_index": 2, "explanation": "炭酸カルシウムの組成式はCaCO₃である", "retry": {"question": "炭酸カルシウムの組成式はどれか", "choices": ["CaCO", "CaCO₂", "CaCO₃", "Ca(CO)₂", "Ca(CO)₃"], "answer_index": 2, "explanation": "炭酸カルシウムの組成式はCaCO₃である"}}, {"subject": "英語", "field": "比較級", "question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は、形容詞の後ろに-erを付ける。", "retry": {"question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は、形容詞の後ろに-erを付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の前ろにtoを付ける。", "retry": {"question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の前ろにtoを付ける。"}}, {"subject": "英語", "field": "受動態", "question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。", "retry": {"question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "単数の主語は、isを用いる。", "retry": {"question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "単数の主語は、isを用いる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try it.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 3, "explanation": "能力や可能を表すときは、canを用いる。", "retry": {"question": "You ( ) try it.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 3, "explanation": "能力や可能を表すときは、canを用いる。"}}, {"subject": "英語", "field": "比較級", "question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は、形容詞の後ろにmoreを付ける。", "retry": {"question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は、形容詞の後ろにmoreを付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listens"], "answer_index": 1, "explanation": "動名詞は、動詞の前ろに-ingを付ける。", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listens"], "answer_index": 1, "explanation": "動名詞は、動詞の前ろに-ingを付ける。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by Shakespeare.", "choices": ["write", "writes", "wrote", "written", "writing"], "answer_index": 3, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。", "retry": {"question": "The play ( ) by Shakespeare.", "choices": ["write", "writes", "wrote", "written", "writing"], "answer_index": 3, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) from Japan.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "複数の主語は、areを用いる。", "retry": {"question": "They ( ) from Japan.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "複数の主語は、areを用いる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) come with me.", "choices": ["can", "may", "must", "should", "will"], "answer_index": 3, "explanation": "助言や勧めを表すときは、shouldを用いる。", "retry": {"question": "You ( ) come with me.", "choices": ["can", "may", "must", "should", "will"], "answer_index": 3, "explanation": "助言や勧めを表すときは、shouldを用いる。"}}, {"subject": "英語", "field": "比較級", "question": "This is the ( ) book I've ever read.", "choices": ["good", "better", "best", "goodly", "goodest"], "answer_index": 2, "explanation": "最上級は、形容詞の後ろに-estを付ける。", "retry": {"question": "This is the ( ) book I've ever read.", "choices": ["good", "better", "best", "goodly", "goodest"], "answer_index": 2, "explanation": "最上級は、形容詞の後ろに-estを付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to eat dinner.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の前ろにtoを付ける。", "retry": {"question": "I want ( ) to eat dinner.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の前ろにtoを付ける。"}}, {"subject": "英語", "field": "受動態", "question": "The picture ( ) by my sister.", "choices": ["paint", "paints", "painted", "painting", "painted"], "answer_index": 3, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。", "retry": {"question": "The picture ( ) by my sister.", "choices": ["paint", "paints", "painted", "painting", "painted"], "answer_index": 3, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。"}}, {"subject": "英語", "field": "be動詞", "question": "I ( ) a teacher.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 0, "explanation": "単数の主語は、amを用いる。", "retry": {"question": "I ( ) a teacher.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 0, "explanation": "単数の主語は、amを用いる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English fluently.", "choices": ["can", "may", "must", "should", "will"], "answer_index": 0, "explanation": "能力や可能を表すときは、canを用いる。", "retry": {"question": "You ( ) speak English fluently.", "choices": ["can", "may", "must", "should", "will"], "answer_index": 0, "explanation": "能力や可能を表すときは、canを用いる。"}}, {"subject": "英語", "field": "比較級", "question": "This hotel is ( ) than the one we stayed at last year.", "choices": ["expensive", "more expensive", "most expensive", "expensively", "expensivest"], "answer_index": 1, "explanation": "比較級は、形容詞の後ろにmoreを付ける。", "retry": {"question": "This hotel is ( ) than the one we stayed at last year.", "choices": ["expensive", "more expensive", "most expensive", "expensively", "expensivest"], "answer_index": 1, "explanation": "比較級は、形容詞の後ろにmoreを付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) to the movies.", "choices": ["to go", "going", "go", "went", "goes"], "answer_index": 0, "explanation": "不定詞は、動詞の前ろにtoを付ける。", "retry": {"question": "I love ( ) to the movies.", "choices": ["to go", "going", "go", "went", "goes"], "answer_index": 0, "explanation": "不定詞は、動詞の前ろにtoを付ける。"}}, {"subject": "英語", "field": "受動態", "question": "The food ( ) by the chef.", "choices": ["cook", "cooks", "cooked", "cooking", "cooked"], "answer_index": 3, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。", "retry": {"question": "The food ( ) by the chef.", "choices": ["cook", "cooks", "cooked", "cooking", "cooked"], "answer_index": 3, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。"}}, {"subject": "英語", "field": "be動詞", "question": "We ( ) from America.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "複数の主語は、areを用いる。", "retry": {"question": "We ( ) from America.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 2, "explanation": "複数の主語は、areを用いる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try to come on time.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助言や勧めを表すときは、shouldを用いる。", "retry": {"question": "You ( ) try to come on time.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助言や勧めを表すときは、shouldを用いる。"}}, {"subject": "英語", "field": "比較級", "question": "This is the ( ) city I've ever visited.", "choices": ["big", "bigger", "biggest", "bigly", "bigest"], "answer_index": 2, "explanation": "最上級は、形容詞の後ろに-estを付ける。", "retry": {"question": "This is the ( ) city I've ever visited.", "choices": ["big", "bigger", "biggest", "bigly", "bigest"], "answer_index": 2, "explanation": "最上級は、形容詞の後ろに-estを付ける。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to travel around the world.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の前ろにtoを付ける。", "retry": {"question": "I want ( ) to travel around the world.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞は、動詞の前ろにtoを付ける。"}}, {"subject": "英語", "field": "受動態", "question": "The music ( ) by the orchestra.", "choices": ["play", "plays", "played", "playing", "played"], "answer_index": 3, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。", "retry": {"question": "The music ( ) by the orchestra.", "choices": ["play", "plays", "played", "playing", "played"], "answer_index": 3, "explanation": "受動態は、be動詞の後ろに過去分詞を付ける。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a doctor.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "単数の主語は、isを用いる。", "retry": {"question": "He ( ) a doctor.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "単数の主語は、isを用いる。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English fluently if you practice every day.", "choices": ["can", "may", "must", "should", "will"], "answer_index": 0, "explanation": "能力や可能を表すときは、canを用いる。", "retry": {"question": "You ( ) speak English fluently if you practice every day.", "choices": ["can", "may", "must", "should", "will"], "answer_index": 0, "explanation": "能力や可能を表すときは、canを用いる。"}}];
+const LC=['a','b','c','d','e'];
+const NOTIFY_URL='https://script.google.com/macros/s/AKfycbyOa4De8zupkRe0tXU3lz18tWkPG4jg2HdVgUhFC_BnYrUDPqlvKCAS4Y4ccfEj8KWi/exec';
+const NOTIFY_SECRET='yuukeibotquiz2026';
+const DATE_STR='2026年5月29日(金)';
+const QUIZ_URL='https://kawakanpa.github.io/line-quiz-bot/quiz-2026-05-29.html';
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function init(){
+  let h='';
+  QS.forEach((q,i)=>{
+    const ch=q.choices.map((c,ci)=>`<label class="clabel" id="lbl-${i}-${ci}"><input type="radio" name="q${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    const rq=q.retry;
+    const rch=rq.choices.map((c,ci)=>`<label class="clabel" id="rlbl-${i}-${ci}"><input type="radio" name="rq${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    h+=`<div class="qcard" id="card-${i}">
+<div class="qhead"><span class="qnum">問${i+1}</span><span class="tag">${esc(q.subject)} / ${esc(q.field)}</span></div>
+<div class="qtext">${esc(q.question)}</div>
+<div id="ch-${i}">${ch}</div>
+<div class="resarea" id="res-${i}">
+  <div id="bdg-${i}"></div>
+  <div class="expl">${esc(q.explanation)}</div>
+  <div class="rbtns" id="rbtns-${i}">
+    <button class="btn btn-retry" onclick="showRetry(${i})">わかった！練習問題を解く 🔄</button>
+  </div>
+</div>
+<div class="retrybox" id="retry-${i}">
+  <h4>🔄 もう一度チャレンジ！</h4>
+  <div class="qtext">${esc(rq.question)}</div>
+  <div id="rch-${i}">${rch}</div>
+  <button class="btn-confirm" id="rcbtn-${i}" onclick="submitRetry(${i})">確認する</button>
+  <div class="rresult" id="rres-${i}">
+    <div id="rbdg-${i}"></div>
+    <div class="expl">${esc(rq.explanation)}</div>
+  </div>
+</div>
+</div>`;
+  });
+  document.getElementById('qlist').innerHTML=h;
+}
+function submitAll(){
+  const missing=QS.reduce((a,_,i)=>{if(!document.querySelector(`input[name="q${i}"]:checked`))a.push(i+1);return a;},[]);
+  if(missing.length){alert(`問${missing.join('、')}がまだ答えていません！`);return;}
+  let cor=0;
+  const resList=[];
+  QS.forEach((q,i)=>{
+    const sv=parseInt(document.querySelector(`input[name="q${i}"]:checked`).value);
+    const ok=sv===q.answer_index;
+    if(ok)cor++;
+    resList.push({num:i+1,subject:q.subject,field:q.field,correct:ok});
+    document.querySelectorAll(`#ch-${i} .clabel`).forEach((l,li)=>{
+      if(li===q.answer_index)l.classList.add('hl-ok');
+      else if(li===sv&&!ok)l.classList.add('hl-ng');
+    });
+    document.querySelectorAll(`input[name="q${i}"]`).forEach(r=>r.disabled=true);
+    document.getElementById(`bdg-${i}`).innerHTML=ok?
+      '<span class="badge-ok">✓ 正解！</span>':
+      `<span class="badge-ng">✗ 不正解（正解: ${LC[q.answer_index]}）</span>`;
+    document.getElementById(`res-${i}`).style.display='block';
+    document.getElementById(`card-${i}`).classList.add(ok?'ok':'ng');
+    if(ok){const rb=document.getElementById(`rbtns-${i}`);if(rb)rb.style.display='none';}
+  });
+  const sc=document.getElementById('scorecard');
+  const isPerfect=cor===QS.length;
+  const topMsg=isPerfect?'🎉 全問正解！':'✅ 回答完了！';
+  sc.innerHTML=`<div style="font-size:1.4em;font-weight:700;color:#2e7d32;margin-bottom:8px">${topMsg}</div><div class="score-num">${cor}<span style="font-size:.5em;color:#666"> / ${QS.length}</span></div><div class="score-sub">正解率 ${Math.round(cor/QS.length*100)}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
+  sc.style.display='block';
+  document.getElementById('subwrap').style.display='none';
+  sc.scrollIntoView({behavior:'smooth'});
+  sendResultsNotification(cor,resList);
+}
+function markOk(i){document.getElementById(`rbtns-${i}`).innerHTML='<span class="ok-msg">✓ 理解しました！</span>';}
+function showRetry(i){
+  document.getElementById(`retry-${i}`).style.display='block';
+  document.getElementById(`rbtns-${i}`).style.display='none';
+  document.getElementById(`retry-${i}`).scrollIntoView({behavior:'smooth'});
+}
+function submitRetry(i){
+  const rq=QS[i].retry;
+  const sel=document.querySelector(`input[name="rq${i}"]:checked`);
+  if(!sel){alert('答えを選んでください！');return;}
+  const sv=parseInt(sel.value);
+  const ok=sv===rq.answer_index;
+  document.querySelectorAll(`#rch-${i} .clabel`).forEach((l,li)=>{
+    if(li===rq.answer_index)l.classList.add('hl-ok');
+    else if(li===sv&&!ok)l.classList.add('hl-ng');
+  });
+  document.querySelectorAll(`input[name="rq${i}"]`).forEach(r=>r.disabled=true);
+  document.getElementById(`rbdg-${i}`).innerHTML=ok?
+    '<span class="badge-ok">✓ 正解！よくできました！</span>':
+    `<span class="badge-ng">✗ 不正解（正解: ${LC[rq.answer_index]}）</span>`;
+  document.getElementById(`rres-${i}`).style.display='block';
+  document.getElementById(`rcbtn-${i}`).style.display='none';
+}
+function sendResultsNotification(cor,resList){
+  if(!NOTIFY_URL)return;
+  const payload=JSON.stringify({secret:NOTIFY_SECRET,type:'results',date:DATE_STR,score:cor,total:QS.length,results:resList,quiz_url:QUIZ_URL});
+  fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:payload}).catch(()=>{});
+  if(cor===QS.length){
+    const p=JSON.stringify({secret:NOTIFY_SECRET,type:'perfect',date:DATE_STR,total:QS.length,quiz_url:QUIZ_URL});
+    setTimeout(()=>fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:p}).catch(()=>{}),500);
+  }
+}
+init();
+</script>
+</body>
+</html>
