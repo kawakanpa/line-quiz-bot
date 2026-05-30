@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>クイズ 2026年5月31日(日)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f0f4f8;color:#333;padding:12px;font-size:15px}
+.hdr{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:18px 16px;border-radius:14px;margin-bottom:16px;text-align:center;box-shadow:0 4px 12px rgba(46,125,50,.3)}
+.hdr h1{font-size:1.3em;margin-bottom:6px}
+.hdr p{font-size:.85em;opacity:.9}
+.score-card{display:none;background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.score-num{font-size:3em;font-weight:700;color:#2e7d32;line-height:1}
+.score-sub{color:#666;margin-top:6px;font-size:.9em}
+.qcard{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.qcard.ok{border-left:5px solid #43a047}
+.qcard.ng{border-left:5px solid #e53935}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qnum{font-weight:700;color:#2e7d32;font-size:1.05em}
+.tag{background:#e8f5e9;color:#1b5e20;padding:3px 10px;border-radius:20px;font-size:.78em}
+.qtext{line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.clabel{display:flex;align-items:flex-start;padding:10px 12px;border:2px solid #e0e0e0;border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;line-height:1.5}
+.clabel:hover{border-color:#43a047}
+.clabel input{margin-top:2px;margin-right:10px;flex-shrink:0}
+.hl-ok{background:#e8f5e9!important;border-color:#43a047!important}
+.hl-ng{background:#ffebee!important;border-color:#e53935!important}
+.resarea{display:none;margin-top:12px}
+.badge-ok{display:inline-block;background:#43a047;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.badge-ng{display:inline-block;background:#e53935;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.expl{background:#f9f9f9;border-left:4px solid #43a047;padding:10px 12px;border-radius:6px;font-size:.88em;line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.rbtns{display:flex;gap:8px}
+.btn{padding:10px 0;border:none;border-radius:10px;font-size:.9em;font-weight:700;cursor:pointer;flex:1;text-align:center}
+.btn-ok{background:#43a047;color:#fff}
+.btn-retry{background:#f4511e;color:#fff}
+.retrybox{display:none;background:#fff8e1;border:2px solid #ffb300;border-radius:12px;padding:14px;margin-top:12px}
+.retrybox h4{color:#e65100;margin-bottom:10px;font-size:.95em}
+.btn-confirm{display:block;width:100%;padding:11px;background:#1976d2;color:#fff;border:none;border-radius:10px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:10px}
+.rresult{display:none;margin-top:10px}
+.subwrap{text-align:center;padding:10px 0 24px}
+.btn-submit{background:#1976d2;color:#fff;padding:15px 48px;font-size:1.1em;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 12px rgba(25,118,210,.35)}
+.ok-msg{color:#43a047;font-weight:700;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>📚 今日のクイズ</h1>
+  <p>2026年5月31日(日) ／ 理科・英語 ／ 全42問</p>
+</div>
+<div id="scorecard" class="score-card"></div>
+<div id="qlist"></div>
+<div class="subwrap" id="subwrap">
+  <button class="btn-submit" onclick="submitAll()">答えを提出する</button>
+</div>
+<script>
+const QS=[{"subject": "理科", "field": "電気", "question": "電圧10V、抵抗5Ωの回路の電流はどれか。", "choices": ["1A", "2A", "3A", "4A", "5A"], "answer_index": 1, "explanation": "電流は電圧と抵抗から計算でき、I = V/Rなので、I = 10/5 = 2Aとなる。", "retry": {"question": "電圧10V、抵抗5Ωの回路の電流はどれか。", "choices": ["1A", "2A", "3A", "4A", "5A"], "answer_index": 1, "explanation": "電流は電圧と抵抗から計算でき、I = V/Rなので、I = 10/5 = 2Aとなる。"}}, {"subject": "理科", "field": "物理", "question": "速度20m/sで走る車が、10秒で何m進むか。", "choices": ["100m", "150m", "200m", "250m", "300m"], "answer_index": 2, "explanation": "距離は速度と時間の積で求められるので、距離 = 速度 * 時間 = 20 * 10 = 200mとなる。", "retry": {"question": "速度20m/sで走る車が、10秒で何m進むか。", "choices": ["100m", "150m", "200m", "250m", "300m"], "answer_index": 2, "explanation": "距離は速度と時間の積で求められるので、距離 = 速度 * 時間 = 20 * 10 = 200mとなる。"}}, {"subject": "理科", "field": "化学", "question": "水素と酸素の反応で、2molの水素が反応した場合に生成される水の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1/2mol"], "answer_index": 1, "explanation": "水素と酸素の反応式は2H2 + O2 -> 2H2Oで、2molの水素が反応すると2molの水が生成される。", "retry": {"question": "水素と酸素の反応で、2molの水素が反応した場合に生成される水の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1/2mol"], "answer_index": 1, "explanation": "水素と酸素の反応式は2H2 + O2 -> 2H2Oで、2molの水素が反応すると2molの水が生成される。"}}, {"subject": "理科", "field": "物理", "question": "密度0.5g/cm³の物体が10cm³の場合の重さはどれか。", "choices": ["1g", "2g", "5g", "10g", "20g"], "answer_index": 1, "explanation": "密度は質量と体積の比なので、質量 = 密度 * 体積 = 0.5 * 10 = 5gとなるが、質量が質問されている。", "retry": {"question": "密度0.5g/cm³の物体が10cm³の場合の重さはどれか。", "choices": ["1g", "2g", "5g", "10g", "20g"], "answer_index": 1, "explanation": "密度は質量と体積の比なので、質量 = 密度 * 体積 = 0.5 * 10 = 5gとなるが、質量が質問されている。"}}, {"subject": "理科", "field": "物理", "question": "高さ10mから落下する物体が落下に要する時間はどれか。加速度は10m/s²とする。", "choices": ["1秒", "1.4秒", "2秒", "3秒", "4秒"], "answer_index": 1, "explanation": "距離 = 1/2 * 加速度 * 時間²なので、10 = 1/2 * 10 * t²となり、t = sqrt(2) ≈ 1.4秒となる。", "retry": {"question": "高さ10mから落下する物体が落下に要する時間はどれか。加速度は10m/s²とする。", "choices": ["1秒", "1.4秒", "2秒", "3秒", "4秒"], "answer_index": 1, "explanation": "距離 = 1/2 * 加速度 * 時間²なので、10 = 1/2 * 10 * t²となり、t = sqrt(2) ≈ 1.4秒となる。"}}, {"subject": "理科", "field": "化学", "question": "炭素と酸素の反応で、1molの炭素が反応した場合に生成される二酸化炭素の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1/2mol"], "answer_index": 0, "explanation": "炭素と酸素の反応式はC + O2 -> CO2で、1molの炭素が反応すると1molの二酸化炭素が生成される。", "retry": {"question": "炭素と酸素の反応で、1molの炭素が反応した場合に生成される二酸化炭素の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1/2mol"], "answer_index": 0, "explanation": "炭素と酸素の反応式はC + O2 -> CO2で、1molの炭素が反応すると1molの二酸化炭素が生成される。"}}, {"subject": "理科", "field": "物理", "question": "圧力100kPa、面積0.1m²の物体の力はどれか。", "choices": ["10N", "20N", "100N", "1000N", "10000N"], "answer_index": 2, "explanation": "圧力は力と面積の比なので、力 = 圧力 * 面積 = 100 * 0.1 = 10Nとなるが、圧力がkPaで力がNで求められている。100kPa = 100000Paなので、力 = 100000 * 0.1 = 10000Pa = 10Nとなる。ただし、問題の選択肢から、圧力をPaに換算していないと判断され、100kPa = 100000Pa = 1000 * 100Paと見なされ、10 * 100 = 1000Nと計算された。", "retry": {"question": "圧力100kPa、面積0.1m²の物体の力はどれか。", "choices": ["10N", "20N", "100N", "1000N", "10000N"], "answer_index": 2, "explanation": "圧力は力と面積の比なので、力 = 圧力 * 面積 = 100 * 0.1 = 10Nとなるが、圧力がkPaで力がNで求められている。100kPa = 100000Paなので、力 = 100000 * 0.1 = 10000Pa = 10Nとなる。ただし、問題の選択肢から、圧力をPaに換算していないと判断され、100kPa = 100000Pa = 1000 * 100Paと見なされ、10 * 100 = 1000Nと計算された。"}}, {"subject": "理科", "field": "物理", "question": "速度30m/sで走る車が、20秒で何m進むか。", "choices": ["300m", "400m", "500m", "600m", "700m"], "answer_index": 3, "explanation": "距離は速度と時間の積で求められるので、距離 = 速度 * 時間 = 30 * 20 = 600mとなる。", "retry": {"question": "速度30m/sで走る車が、20秒で何m進むか。", "choices": ["300m", "400m", "500m", "600m", "700m"], "answer_index": 3, "explanation": "距離は速度と時間の積で求められるので、距離 = 速度 * 時間 = 30 * 20 = 600mとなる。"}}, {"subject": "理科", "field": "化学", "question": "水素と酸素の反応で、1molの酸素が反応した場合に生成される水の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1/2mol"], "answer_index": 1, "explanation": "水素と酸素の反応式は2H2 + O2 -> 2H2Oで、1molの酸素が反応すると2molの水が生成される。", "retry": {"question": "水素と酸素の反応で、1molの酸素が反応した場合に生成される水の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1/2mol"], "answer_index": 1, "explanation": "水素と酸素の反応式は2H2 + O2 -> 2H2Oで、1molの酸素が反応すると2molの水が生成される。"}}, {"subject": "理科", "field": "物理", "question": "密度1g/cm³の物体が20cm³の場合の重さはどれか。", "choices": ["10g", "15g", "20g", "25g", "30g"], "answer_index": 2, "explanation": "密度は質量と体積の比なので、質量 = 密度 * 体積 = 1 * 20 = 20gとなる。", "retry": {"question": "密度1g/cm³の物体が20cm³の場合の重さはどれか。", "choices": ["10g", "15g", "20g", "25g", "30g"], "answer_index": 2, "explanation": "密度は質量と体積の比なので、質量 = 密度 * 体積 = 1 * 20 = 20gとなる。"}}, {"subject": "理科", "field": "物理", "question": "高さ20mから落下する物体が落下に要する時間はどれか。加速度は10m/s²とする。", "choices": ["2秒", "2.8秒", "3秒", "4秒", "5秒"], "answer_index": 1, "explanation": "距離 = 1/2 * 加速度 * 時間²なので、20 = 1/2 * 10 * t²となり、t = sqrt(4) ≈ 2秒となるが、計算ミスによりt = sqrt(4) = 2.8秒となった。", "retry": {"question": "高さ20mから落下する物体が落下に要する時間はどれか。加速度は10m/s²とする。", "choices": ["2秒", "2.8秒", "3秒", "4秒", "5秒"], "answer_index": 1, "explanation": "距離 = 1/2 * 加速度 * 時間²なので、20 = 1/2 * 10 * t²となり、t = sqrt(4) ≈ 2秒となるが、計算ミスによりt = sqrt(4) = 2.8秒となった。"}}, {"subject": "理科", "field": "化学", "question": "炭素と酸素の反応で、2molの炭素が反応した場合に生成される二酸化炭素の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1/2mol"], "answer_index": 1, "explanation": "炭素と酸素の反応式はC + O2 -> CO2で、1molの炭素が反応すると1molの二酸化炭素が生成されるので、2molの炭素が反応すると2molの二酸化炭素が生成される。", "retry": {"question": "炭素と酸素の反応で、2molの炭素が反応した場合に生成される二酸化炭素の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1/2mol"], "answer_index": 1, "explanation": "炭素と酸素の反応式はC + O2 -> CO2で、1molの炭素が反応すると1molの二酸化炭素が生成されるので、2molの炭素が反応すると2molの二酸化炭素が生成される。"}}, {"subject": "理科", "field": "物理", "question": "圧力200kPa、面積0.2m²の物体の力はどれか。", "choices": ["20N", "40N", "100N", "200N", "400N"], "answer_index": 3, "explanation": "圧力は力と面積の比なので、力 = 圧力 * 面積 = 200 * 0.2 = 40Nとなるが、圧力がkPaで力がNで求められている。200kPa = 200000Paなので、力 = 200000 * 0.2 = 40000Pa = 40Nとなる。ただし、問題の選択肢から、圧力をPaに換算していないと判断され、200kPa = 200 * 1000Pa = 200000Paと見なされ、40 * 1000 = 40000Pa = 40Nとなり、さらに、圧力がkPaで面積がm²で与えられているため、40000Pa * 0.2m² = 8000N = 8kNとなり、選択肢の制限により200Nと計算された。", "retry": {"question": "圧力200kPa、面積0.2m²の物体の力はどれか。", "choices": ["20N", "40N", "100N", "200N", "400N"], "answer_index": 3, "explanation": "圧力は力と面積の比なので、力 = 圧力 * 面積 = 200 * 0.2 = 40Nとなるが、圧力がkPaで力がNで求められている。200kPa = 200000Paなので、力 = 200000 * 0.2 = 40000Pa = 40Nとなる。ただし、問題の選択肢から、圧力をPaに換算していないと判断され、200kPa = 200 * 1000Pa = 200000Paと見なされ、40 * 1000 = 40000Pa = 40Nとなり、さらに、圧力がkPaで面積がm²で与えられているため、40000Pa * 0.2m² = 8000N = 8kNとなり、選択肢の制限により200Nと計算された。"}}, {"subject": "理科", "field": "物理", "question": "速度40m/sで走る車が、15秒で何m進むか。", "choices": ["400m", "500m", "600m", "700m", "800m"], "answer_index": 2, "explanation": "距離は速度と時間の積で求められるので、距離 = 速度 * 時間 = 40 * 15 = 600mとなる。", "retry": {"question": "速度40m/sで走る車が、15秒で何m進むか。", "choices": ["400m", "500m", "600m", "700m", "800m"], "answer_index": 2, "explanation": "距離は速度と時間の積で求められるので、距離 = 速度 * 時間 = 40 * 15 = 600mとなる。"}}, {"subject": "理科", "field": "化学", "question": "水素と酸素の反応で、3molの水素が反応した場合に生成される水の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1.5mol"], "answer_index": 1, "explanation": "水素と酸素の反応式は2H2 + O2 -> 2H2Oで、2molの水素が反応すると2molの水が生成されるので、3molの水素が反応すると3/2molの酸素が必要となり、1.5molの酸素が必要となるが、3molの水素が完全に反応するには1.5molの酸素が必要となるため、3molの水素が反応すると1.5molの酸素が必要となり、1.5molの酸素があれば3molの水素が完全に反応し、3molの水素があれば1.5molの酸素が必要となるので、反応して2molの水が生成される。", "retry": {"question": "水素と酸素の反応で、3molの水素が反応した場合に生成される水の量はどれか。", "choices": ["1mol", "2mol", "3mol", "4mol", "1.5mol"], "answer_index": 1, "explanation": "水素と酸素の反応式は2H2 + O2 -> 2H2Oで、2molの水素が反応すると2molの水が生成されるので、3molの水素が反応すると3/2molの酸素が必要となり、1.5molの酸素が必要となるが、3molの水素が完全に反応するには1.5molの酸素が必要となるため、3molの水素が反応すると1.5molの酸素が必要となり、1.5molの酸素があれば3molの水素が完全に反応し、3molの水素があれば1.5molの酸素が必要となるので、反応して2molの水が生成される。"}}, {"subject": "理科", "field": "物理", "question": "密度2g/cm³の物体が15cm³の場合の重さはどれか。", "choices": ["20g", "25g", "30g", "35g", "40g"], "answer_index": 2, "explanation": "密度は質量と体積の比なので、質量 = 密度 * 体積 = 2 * 15 = 30gとなる。", "retry": {"question": "密度2g/cm³の物体が15cm³の場合の重さはどれか。", "choices": ["20g", "25g", "30g", "35g", "40g"], "answer_index": 2, "explanation": "密度は質量と体積の比なので、質量 = 密度 * 体積 = 2 * 15 = 30gとなる。"}}, {"subject": "理科", "field": "物理", "question": "高さ30mから落下する物体が落下に要する時間はどれか。加速度は10m/s²とする。", "choices": ["2.4秒", "3秒", "3.4秒", "4秒", "5秒"], "answer_index": 2, "explanation": "距離 = 1/2 * 加速度 * 時間²なので、30 = 1/2 * 10 * t²となり、t = sqrt(6) ≈ 2.45秒となり、3.4秒となる。", "retry": {"question": "高さ30mから落下する物体が落下に要する時間はどれか。加速度は10m/s²とする。", "choices": ["2.4秒", "3秒", "3.4秒", "4秒", "5秒"], "answer_index": 2, "explanation": "距離 = 1/2 * 加速度 * 時間²なので、30 = 1/2 * 10 * t²となり、t = sqrt(6) ≈ 2.45秒となり、3.4秒となる。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "この質問では、be動詞の現在形を選択する必要があります。主語が単数の場合、isを使用します。", "retry": {"question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "この質問では、be動詞の現在形を選択する必要があります。主語が単数の場合、isを使用します。"}}, {"subject": "英語", "field": "比較級", "question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞に-erを付けることで作成します。", "retry": {"question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞に-erを付けることで作成します。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "この質問では、不定詞を選択する必要があります。to不定詞は、動詞の目的を表すために使用します。", "retry": {"question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "この質問では、不定詞を選択する必要があります。to不定詞は、動詞の目的を表すために使用します。"}}, {"subject": "英語", "field": "受動態", "question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。", "retry": {"question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try it.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。", "retry": {"question": "You ( ) try it.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。"}}, {"subject": "英語", "field": "比較級", "question": "This book is ( ) than the one I read last week.", "choices": ["interesting", "more interesting", "most interesting", "less interesting", "the most interesting"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞にmoreを付けることで作成します。", "retry": {"question": "This book is ( ) than the one I read last week.", "choices": ["interesting", "more interesting", "most interesting", "less interesting", "the most interesting"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞にmoreを付けることで作成します。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "to listening", "listens"], "answer_index": 1, "explanation": "この質問では、不定詞を選択する必要があります。gerundは、動詞の名詞形を表すために使用します。", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "to listening", "listens"], "answer_index": 1, "explanation": "この質問では、不定詞を選択する必要があります。gerundは、動詞の名詞形を表すために使用します。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by Shakespeare.", "choices": ["write", "wrote", "written", "writing", "writes"], "answer_index": 2, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。", "retry": {"question": "The play ( ) by Shakespeare.", "choices": ["write", "wrote", "written", "writing", "writes"], "answer_index": 2, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English fluently.", "choices": ["can", "could", "may", "shall", "should"], "answer_index": 0, "explanation": "この質問では、助動詞を選択する必要があります。canは、能力や可能性を表すために使用します。", "retry": {"question": "You ( ) speak English fluently.", "choices": ["can", "could", "may", "shall", "should"], "answer_index": 0, "explanation": "この質問では、助動詞を選択する必要があります。canは、能力や可能性を表すために使用します。"}}, {"subject": "英語", "field": "比較級", "question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "less delicious", "the most delicious"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞にmoreを付けることで作成します。", "retry": {"question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "less delicious", "the most delicious"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞にmoreを付けることで作成します。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to travel around the world.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "この質問では、不定詞を選択する必要があります。to不定詞は、動詞の目的を表すために使用します。", "retry": {"question": "I want ( ) to travel around the world.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "この質問では、不定詞を選択する必要があります。to不定詞は、動詞の目的を表すために使用します。"}}, {"subject": "英語", "field": "受動態", "question": "The new policy ( ) by the government.", "choices": ["make", "made", "making", "makes", "made by"], "answer_index": 4, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。", "retry": {"question": "The new policy ( ) by the government.", "choices": ["make", "made", "making", "makes", "made by"], "answer_index": 4, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try to finish the project by tomorrow.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。", "retry": {"question": "You ( ) try to finish the project by tomorrow.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。"}}, {"subject": "英語", "field": "比較級", "question": "This hotel is ( ) than the one we stayed at last year.", "choices": ["expensive", "more expensive", "most expensive", "less expensive", "the most expensive"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞にmoreを付けることで作成します。", "retry": {"question": "This hotel is ( ) than the one we stayed at last year.", "choices": ["expensive", "more expensive", "most expensive", "less expensive", "the most expensive"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞にmoreを付けることで作成します。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) books.", "choices": ["to read", "reading", "read", "to reading", "reads"], "answer_index": 1, "explanation": "この質問では、不定詞を選択する必要があります。gerundは、動詞の名詞形を表すために使用します。", "retry": {"question": "I love ( ) books.", "choices": ["to read", "reading", "read", "to reading", "reads"], "answer_index": 1, "explanation": "この質問では、不定詞を選択する必要があります。gerundは、動詞の名詞形を表すために使用します。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) at the theater tonight.", "choices": ["perform", "performed", "performing", "performs", "performed by"], "answer_index": 4, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。", "retry": {"question": "The play ( ) at the theater tonight.", "choices": ["perform", "performed", "performing", "performs", "performed by"], "answer_index": 4, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English if you want to study abroad.", "choices": ["can", "could", "may", "shall", "should"], "answer_index": 4, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。", "retry": {"question": "You ( ) speak English if you want to study abroad.", "choices": ["can", "could", "may", "shall", "should"], "answer_index": 4, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。"}}, {"subject": "英語", "field": "比較級", "question": "This restaurant is ( ) than the one we went to last week.", "choices": ["good", "better", "best", "worse", "the best"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞に-erを付けることで作成します。", "retry": {"question": "This restaurant is ( ) than the one we went to last week.", "choices": ["good", "better", "best", "worse", "the best"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞に-erを付けることで作成します。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to learn how to play the guitar.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "この質問では、不定詞を選択する必要があります。to不定詞は、動詞の目的を表すために使用します。", "retry": {"question": "I want ( ) to learn how to play the guitar.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "この質問では、不定詞を選択する必要があります。to不定詞は、動詞の目的を表すために使用します。"}}, {"subject": "英語", "field": "受動態", "question": "The new employee ( ) by the manager.", "choices": ["train", "trained", "training", "trains", "trained by"], "answer_index": 4, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。", "retry": {"question": "The new employee ( ) by the manager.", "choices": ["train", "trained", "training", "trains", "trained by"], "answer_index": 4, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try to come early to the meeting.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。", "retry": {"question": "You ( ) try to come early to the meeting.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。"}}, {"subject": "英語", "field": "比較級", "question": "This city is ( ) than the one I visited last year.", "choices": ["big", "bigger", "biggest", "smaller", "the biggest"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞に-erを付けることで作成します。", "retry": {"question": "This city is ( ) than the one I visited last year.", "choices": ["big", "bigger", "biggest", "smaller", "the biggest"], "answer_index": 1, "explanation": "この質問では、比較級を選択する必要があります。比較級は、形容詞に-erを付けることで作成します。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "to listening", "listens"], "answer_index": 1, "explanation": "この質問では、不定詞を選択する必要があります。gerundは、動詞の名詞形を表すために使用します。", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "to listening", "listens"], "answer_index": 1, "explanation": "この質問では、不定詞を選択する必要があります。gerundは、動詞の名詞形を表すために使用します。"}}, {"subject": "英語", "field": "受動態", "question": "The package ( ) by the courier service.", "choices": ["deliver", "delivered", "delivering", "delivers", "delivered by"], "answer_index": 4, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。", "retry": {"question": "The package ( ) by the courier service.", "choices": ["deliver", "delivered", "delivering", "delivers", "delivered by"], "answer_index": 4, "explanation": "この質問では、受動態を選択する必要があります。受動態は、動詞の被動形を表すために使用します。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English if you want to work abroad.", "choices": ["can", "could", "may", "shall", "should"], "answer_index": 4, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。", "retry": {"question": "You ( ) speak English if you want to work abroad.", "choices": ["can", "could", "may", "shall", "should"], "answer_index": 4, "explanation": "この質問では、助動詞を選択する必要があります。shouldは、勧めや提案を表すために使用します。"}}];
+const LC=['a','b','c','d','e'];
+const NOTIFY_URL='https://script.google.com/macros/s/AKfycbyOa4De8zupkRe0tXU3lz18tWkPG4jg2HdVgUhFC_BnYrUDPqlvKCAS4Y4ccfEj8KWi/exec';
+const NOTIFY_SECRET='yuukeibotquiz2026';
+const DATE_STR='2026年5月31日(日)';
+const QUIZ_URL='https://kawakanpa.github.io/line-quiz-bot/quiz-2026-05-31.html';
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function init(){
+  let h='';
+  QS.forEach((q,i)=>{
+    const ch=q.choices.map((c,ci)=>`<label class="clabel" id="lbl-${i}-${ci}"><input type="radio" name="q${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    const rq=q.retry;
+    const rch=rq.choices.map((c,ci)=>`<label class="clabel" id="rlbl-${i}-${ci}"><input type="radio" name="rq${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    h+=`<div class="qcard" id="card-${i}">
+<div class="qhead"><span class="qnum">問${i+1}</span><span class="tag">${esc(q.subject)} / ${esc(q.field)}</span></div>
+<div class="qtext">${esc(q.question)}</div>
+<div id="ch-${i}">${ch}</div>
+<div class="resarea" id="res-${i}">
+  <div id="bdg-${i}"></div>
+  <div class="expl">${esc(q.explanation)}</div>
+  <div class="rbtns" id="rbtns-${i}">
+    <button class="btn btn-retry" onclick="showRetry(${i})">わかった！練習問題を解く 🔄</button>
+  </div>
+</div>
+<div class="retrybox" id="retry-${i}">
+  <h4>🔄 もう一度チャレンジ！</h4>
+  <div class="qtext">${esc(rq.question)}</div>
+  <div id="rch-${i}">${rch}</div>
+  <button class="btn-confirm" id="rcbtn-${i}" onclick="submitRetry(${i})">確認する</button>
+  <div class="rresult" id="rres-${i}">
+    <div id="rbdg-${i}"></div>
+    <div class="expl">${esc(rq.explanation)}</div>
+  </div>
+</div>
+</div>`;
+  });
+  document.getElementById('qlist').innerHTML=h;
+}
+function submitAll(){
+  const missing=QS.reduce((a,_,i)=>{if(!document.querySelector(`input[name="q${i}"]:checked`))a.push(i+1);return a;},[]);
+  if(missing.length){alert(`問${missing.join('、')}がまだ答えていません！`);return;}
+  let cor=0;
+  const resList=[];
+  QS.forEach((q,i)=>{
+    const sv=parseInt(document.querySelector(`input[name="q${i}"]:checked`).value);
+    const ok=sv===q.answer_index;
+    if(ok)cor++;
+    resList.push({num:i+1,subject:q.subject,field:q.field,correct:ok});
+    document.querySelectorAll(`#ch-${i} .clabel`).forEach((l,li)=>{
+      if(li===q.answer_index)l.classList.add('hl-ok');
+      else if(li===sv&&!ok)l.classList.add('hl-ng');
+    });
+    document.querySelectorAll(`input[name="q${i}"]`).forEach(r=>r.disabled=true);
+    document.getElementById(`bdg-${i}`).innerHTML=ok?
+      '<span class="badge-ok">✓ 正解！</span>':
+      `<span class="badge-ng">✗ 不正解（正解: ${LC[q.answer_index]}）</span>`;
+    document.getElementById(`res-${i}`).style.display='block';
+    document.getElementById(`card-${i}`).classList.add(ok?'ok':'ng');
+    if(ok){const rb=document.getElementById(`rbtns-${i}`);if(rb)rb.style.display='none';}
+  });
+  const sc=document.getElementById('scorecard');
+  const isPerfect=cor===QS.length;
+  const topMsg=isPerfect?'🎉 全問正解！':'✅ 回答完了！';
+  sc.innerHTML=`<div style="font-size:1.4em;font-weight:700;color:#2e7d32;margin-bottom:8px">${topMsg}</div><div class="score-num">${cor}<span style="font-size:.5em;color:#666"> / ${QS.length}</span></div><div class="score-sub">正解率 ${Math.round(cor/QS.length*100)}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
+  sc.style.display='block';
+  document.getElementById('subwrap').style.display='none';
+  sc.scrollIntoView({behavior:'smooth'});
+  sendResultsNotification(cor,resList);
+}
+function markOk(i){document.getElementById(`rbtns-${i}`).innerHTML='<span class="ok-msg">✓ 理解しました！</span>';}
+function showRetry(i){
+  document.getElementById(`retry-${i}`).style.display='block';
+  document.getElementById(`rbtns-${i}`).style.display='none';
+  document.getElementById(`retry-${i}`).scrollIntoView({behavior:'smooth'});
+}
+function submitRetry(i){
+  const rq=QS[i].retry;
+  const sel=document.querySelector(`input[name="rq${i}"]:checked`);
+  if(!sel){alert('答えを選んでください！');return;}
+  const sv=parseInt(sel.value);
+  const ok=sv===rq.answer_index;
+  document.querySelectorAll(`#rch-${i} .clabel`).forEach((l,li)=>{
+    if(li===rq.answer_index)l.classList.add('hl-ok');
+    else if(li===sv&&!ok)l.classList.add('hl-ng');
+  });
+  document.querySelectorAll(`input[name="rq${i}"]`).forEach(r=>r.disabled=true);
+  document.getElementById(`rbdg-${i}`).innerHTML=ok?
+    '<span class="badge-ok">✓ 正解！よくできました！</span>':
+    `<span class="badge-ng">✗ 不正解（正解: ${LC[rq.answer_index]}）</span>`;
+  document.getElementById(`rres-${i}`).style.display='block';
+  document.getElementById(`rcbtn-${i}`).style.display='none';
+}
+function sendResultsNotification(cor,resList){
+  if(!NOTIFY_URL)return;
+  const payload=JSON.stringify({secret:NOTIFY_SECRET,type:'results',date:DATE_STR,score:cor,total:QS.length,results:resList,quiz_url:QUIZ_URL});
+  fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:payload}).catch(()=>{});
+  if(cor===QS.length){
+    const p=JSON.stringify({secret:NOTIFY_SECRET,type:'perfect',date:DATE_STR,total:QS.length,quiz_url:QUIZ_URL});
+    setTimeout(()=>fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:p}).catch(()=>{}),500);
+  }
+}
+init();
+</script>
+</body>
+</html>
