@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>クイズ 2026年6月1日(月)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f0f4f8;color:#333;padding:12px;font-size:15px}
+.hdr{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:18px 16px;border-radius:14px;margin-bottom:16px;text-align:center;box-shadow:0 4px 12px rgba(46,125,50,.3)}
+.hdr h1{font-size:1.3em;margin-bottom:6px}
+.hdr p{font-size:.85em;opacity:.9}
+.score-card{display:none;background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.score-num{font-size:3em;font-weight:700;color:#2e7d32;line-height:1}
+.score-sub{color:#666;margin-top:6px;font-size:.9em}
+.qcard{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.qcard.ok{border-left:5px solid #43a047}
+.qcard.ng{border-left:5px solid #e53935}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.qnum{font-weight:700;color:#2e7d32;font-size:1.05em}
+.tag{background:#e8f5e9;color:#1b5e20;padding:3px 10px;border-radius:20px;font-size:.78em}
+.qtext{line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.clabel{display:flex;align-items:flex-start;padding:10px 12px;border:2px solid #e0e0e0;border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;line-height:1.5}
+.clabel:hover{border-color:#43a047}
+.clabel input{margin-top:2px;margin-right:10px;flex-shrink:0}
+.hl-ok{background:#e8f5e9!important;border-color:#43a047!important}
+.hl-ng{background:#ffebee!important;border-color:#e53935!important}
+.resarea{display:none;margin-top:12px}
+.badge-ok{display:inline-block;background:#43a047;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.badge-ng{display:inline-block;background:#e53935;color:#fff;padding:5px 14px;border-radius:20px;font-size:.88em;font-weight:700;margin-bottom:8px}
+.expl{background:#f9f9f9;border-left:4px solid #43a047;padding:10px 12px;border-radius:6px;font-size:.88em;line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.rbtns{display:flex;gap:8px}
+.btn{padding:10px 0;border:none;border-radius:10px;font-size:.9em;font-weight:700;cursor:pointer;flex:1;text-align:center}
+.btn-ok{background:#43a047;color:#fff}
+.btn-retry{background:#f4511e;color:#fff}
+.retrybox{display:none;background:#fff8e1;border:2px solid #ffb300;border-radius:12px;padding:14px;margin-top:12px}
+.retrybox h4{color:#e65100;margin-bottom:10px;font-size:.95em}
+.btn-confirm{display:block;width:100%;padding:11px;background:#1976d2;color:#fff;border:none;border-radius:10px;font-size:.95em;font-weight:700;cursor:pointer;margin-top:10px}
+.rresult{display:none;margin-top:10px}
+.subwrap{text-align:center;padding:10px 0 24px}
+.btn-submit{background:#1976d2;color:#fff;padding:15px 48px;font-size:1.1em;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 12px rgba(25,118,210,.35)}
+.ok-msg{color:#43a047;font-weight:700;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>📚 今日のクイズ</h1>
+  <p>2026年6月1日(月) ／ 社会・英語 ／ 全49問</p>
+</div>
+<div id="scorecard" class="score-card"></div>
+<div id="qlist"></div>
+<div class="subwrap" id="subwrap">
+  <button class="btn-submit" onclick="submitAll()">答えを提出する</button>
+</div>
+<script>
+const QS=[{"subject": "社会", "field": "歴史", "question": "日本の奈良時代の都はどこか。", "choices": ["京都", "大阪", "奈良", "東京", "横浜"], "answer_index": 2, "explanation": "奈良時代は、710年から794年までの期間で、この間日本の都は奈良に置かれていた。", "retry": {"question": "日本の奈良時代の都はどこか。", "choices": ["京都", "大阪", "奈良", "東京", "横浜"], "answer_index": 2, "explanation": "奈良時代は、710年から794年までの期間で、この間日本の都は奈良に置かれていた。"}}, {"subject": "社会", "field": "地理", "question": "日本の最北端の島はどこか。", "choices": ["本州", "北海道", "九州", "四国", "沖ノ鳥島"], "answer_index": 1, "explanation": "日本の最北端の島は北海道である。", "retry": {"question": "日本の最北端の島はどこか。", "choices": ["本州", "北海道", "九州", "四国", "沖ノ鳥島"], "answer_index": 1, "explanation": "日本の最北端の島は北海道である。"}}, {"subject": "社会", "field": "公民", "question": "日本国憲法の制定年はいつか。", "choices": ["1945年", "1946年", "1947年", "1948年", "1949年"], "answer_index": 2, "explanation": "日本国憲法は1947年11月3日に制定された。", "retry": {"question": "日本国憲法の制定年はいつか。", "choices": ["1945年", "1946年", "1947年", "1948年", "1949年"], "answer_index": 2, "explanation": "日本国憲法は1947年11月3日に制定された。"}}, {"subject": "社会", "field": "歴史", "question": "徳川幕府を開いた将軍は誰か。", "choices": ["徳川家康", "徳川秀忠", "徳川家光", "徳川綱吉", "徳川吉宗"], "answer_index": 0, "explanation": "徳川幕府を開いた将軍は徳川家康である。", "retry": {"question": "徳川幕府を開いた将軍は誰か。", "choices": ["徳川家康", "徳川秀忠", "徳川家光", "徳川綱吉", "徳川吉宗"], "answer_index": 0, "explanation": "徳川幕府を開いた将軍は徳川家康である。"}}, {"subject": "社会", "field": "地理", "question": "世界で最も広い砂漠はどこか。", "choices": ["サハラ砂漠", "ゴビ砂漠", "モハーヴェ砂漠", "アタカマ砂漠", "アンタークティカ"], "answer_index": 0, "explanation": "世界で最も広い砂漠はサハラ砂漠である。", "retry": {"question": "世界で最も広い砂漠はどこか。", "choices": ["サハラ砂漠", "ゴビ砂漠", "モハーヴェ砂漠", "アタカマ砂漠", "アンタークティカ"], "answer_index": 0, "explanation": "世界で最も広い砂漠はサハラ砂漠である。"}}, {"subject": "社会", "field": "公民", "question": "日本の国会の議院は何院か。", "choices": ["1院", "2院", "3院", "4院", "5院"], "answer_index": 1, "explanation": "日本の国会は両院制で、衆議院と参議院の2院で構成されている。", "retry": {"question": "日本の国会の議院は何院か。", "choices": ["1院", "2院", "3院", "4院", "5院"], "answer_index": 1, "explanation": "日本の国会は両院制で、衆議院と参議院の2院で構成されている。"}}, {"subject": "社会", "field": "歴史", "question": "明治維新の年はいつか。", "choices": ["1850年", "1860年", "1867年", "1868年", "1870年"], "answer_index": 3, "explanation": "明治維新は1868年に起こった。", "retry": {"question": "明治維新の年はいつか。", "choices": ["1850年", "1860年", "1867年", "1868年", "1870年"], "answer_index": 3, "explanation": "明治維新は1868年に起こった。"}}, {"subject": "社会", "field": "地理", "question": "日本の最東端の地点はどこか。", "choices": ["本州", "北海道", "九州", "沖ノ鳥島", "野間崎"], "answer_index": 3, "explanation": "日本の最東端の地点は野間崎であるが、国際的に認められているのは沖ノ鳥島である。", "retry": {"question": "日本の最東端の地点はどこか。", "choices": ["本州", "北海道", "九州", "沖ノ鳥島", "野間崎"], "answer_index": 3, "explanation": "日本の最東端の地点は野間崎であるが、国際的に認められているのは沖ノ鳥島である。"}}, {"subject": "社会", "field": "公民", "question": "日本の最高裁判所の判事の任期は何年か。", "choices": ["5年", "10年", "15年", "20年", "65歳まで"], "answer_index": 4, "explanation": "日本の最高裁判所の判事の任期は65歳までである。", "retry": {"question": "日本の最高裁判所の判事の任期は何年か。", "choices": ["5年", "10年", "15年", "20年", "65歳まで"], "answer_index": 4, "explanation": "日本の最高裁判所の判事の任期は65歳までである。"}}, {"subject": "社会", "field": "歴史", "question": "鎌倉幕府を開いた将軍は誰か。", "choices": ["源頼朝", "源義家", "源義光", "源頼家", "源実朝"], "answer_index": 0, "explanation": "鎌倉幕府を開いた将軍は源頼朝である。", "retry": {"question": "鎌倉幕府を開いた将軍は誰か。", "choices": ["源頼朝", "源義家", "源義光", "源頼家", "源実朝"], "answer_index": 0, "explanation": "鎌倉幕府を開いた将軍は源頼朝である。"}}, {"subject": "社会", "field": "地理", "question": "アジア大陸の面積は約何万km²か。", "choices": ["400", "440", "4400", "44000", "440000"], "answer_index": 3, "explanation": "アジア大陸の面積は約4400万km²である。", "retry": {"question": "アジア大陸の面積は約何万km²か。", "choices": ["400", "440", "4400", "44000", "440000"], "answer_index": 3, "explanation": "アジア大陸の面積は約4400万km²である。"}}, {"subject": "社会", "field": "公民", "question": "日本の法律で定められている投票権の年齢は何歳か。", "choices": ["18歳", "20歳", "25歳", "30歳", "35歳"], "answer_index": 0, "explanation": "日本の法律で定められている投票権の年齢は18歳である。", "retry": {"question": "日本の法律で定められている投票権の年齢は何歳か。", "choices": ["18歳", "20歳", "25歳", "30歳", "35歳"], "answer_index": 0, "explanation": "日本の法律で定められている投票権の年齢は18歳である。"}}, {"subject": "社会", "field": "地理", "question": "世界で最も深い湖はどこか。", "choices": ["バイカル湖", "タンギャニーカ湖", "ヴィクトリア湖", "シュプリーム湖", "ミシガン湖"], "answer_index": 0, "explanation": "世界で最も深い湖はバイカル湖である。", "retry": {"question": "世界で最も深い湖はどこか。", "choices": ["バイカル湖", "タンギャニーカ湖", "ヴィクトリア湖", "シュプリーム湖", "ミシガン湖"], "answer_index": 0, "explanation": "世界で最も深い湖はバイカル湖である。"}}, {"subject": "社会", "field": "公民", "question": "日本の法律で定められている婚姻の最低年齢は何歳か。", "choices": ["16歳", "18歳", "20歳", "22歳", "25歳"], "answer_index": 1, "explanation": "日本の法律で定められている婚姻の最低年齢は男性は18歳、女性は18歳である。", "retry": {"question": "日本の法律で定められている婚姻の最低年齢は何歳か。", "choices": ["16歳", "18歳", "20歳", "22歳", "25歳"], "answer_index": 1, "explanation": "日本の法律で定められている婚姻の最低年齢は男性は18歳、女性は18歳である。"}}, {"subject": "社会", "field": "歴史", "question": "平安時代の都はどこか。", "choices": ["京都", "大阪", "奈良", "東京", "横浜"], "answer_index": 0, "explanation": "平安時代の都は京都である。", "retry": {"question": "平安時代の都はどこか。", "choices": ["京都", "大阪", "奈良", "東京", "横浜"], "answer_index": 0, "explanation": "平安時代の都は京都である。"}}, {"subject": "社会", "field": "地理", "question": "アフリカ大陸の面積は約何万km²か。", "choices": ["200", "300", "3000", "30000", "300000"], "answer_index": 3, "explanation": "アフリカ大陸の面積は約3000万km²である。", "retry": {"question": "アフリカ大陸の面積は約何万km²か。", "choices": ["200", "300", "3000", "30000", "300000"], "answer_index": 3, "explanation": "アフリカ大陸の面積は約3000万km²である。"}}, {"subject": "社会", "field": "公民", "question": "日本の法律で定められている最低労働年齢は何歳か。", "choices": ["13歳", "15歳", "16歳", "18歳", "20歳"], "answer_index": 2, "explanation": "日本の法律で定められている最低労働年齢は15歳であるが、ただし、就業にあたっては、18歳未満の者については、就業規則の特例がある。", "retry": {"question": "日本の法律で定められている最低労働年齢は何歳か。", "choices": ["13歳", "15歳", "16歳", "18歳", "20歳"], "answer_index": 2, "explanation": "日本の法律で定められている最低労働年齢は15歳であるが、ただし、就業にあたっては、18歳未満の者については、就業規則の特例がある。"}}, {"subject": "社会", "field": "歴史", "question": "戦国時代の武将の1人である織田信長はどこ出身か。", "choices": ["織田", "斎藤", "明智", "阿波", "尾張"], "answer_index": 4, "explanation": "織田信長は尾張出身である。", "retry": {"question": "戦国時代の武将の1人である織田信長はどこ出身か。", "choices": ["織田", "斎藤", "明智", "阿波", "尾張"], "answer_index": 4, "explanation": "織田信長は尾張出身である。"}}, {"subject": "社会", "field": "地理", "question": "ヨーロッパ大陸の面積は約何万km²か。", "choices": ["500", "600", "1000", "10000", "100000"], "answer_index": 3, "explanation": "ヨーロッパ大陸の面積は約1000万km²である。", "retry": {"question": "ヨーロッパ大陸の面積は約何万km²か。", "choices": ["500", "600", "1000", "10000", "100000"], "answer_index": 3, "explanation": "ヨーロッパ大陸の面積は約1000万km²である。"}}, {"subject": "社会", "field": "公民", "question": "日本の国会議員の任期は何年か。", "choices": ["2年", "3年", "4年", "5年", "6年"], "answer_index": 2, "explanation": "日本の衆議院議員の任期は4年であるが、参議院議員の任期は6年である。", "retry": {"question": "日本の国会議員の任期は何年か。", "choices": ["2年", "3年", "4年", "5年", "6年"], "answer_index": 2, "explanation": "日本の衆議院議員の任期は4年であるが、参議院議員の任期は6年である。"}}, {"subject": "社会", "field": "歴史", "question": "大化の改新はいつか。", "choices": ["645年", "646年", "647年", "648年", "649年"], "answer_index": 0, "explanation": "大化の改新は645年に起こった。", "retry": {"question": "大化の改新はいつか。", "choices": ["645年", "646年", "647年", "648年", "649年"], "answer_index": 0, "explanation": "大化の改新は645年に起こった。"}}, {"subject": "社会", "field": "地理", "question": "オーストラリア大陸の面積は約何万km²か。", "choices": ["500", "700", "7000", "70000", "700000"], "answer_index": 3, "explanation": "オーストラリア大陸の面積は約769万km²である。", "retry": {"question": "オーストラリア大陸の面積は約何万km²か。", "choices": ["500", "700", "7000", "70000", "700000"], "answer_index": 3, "explanation": "オーストラリア大陸の面積は約769万km²である。"}}, {"subject": "社会", "field": "公民", "question": "日本の法律で定められている国民年金の加入年齢は何歳からか。", "choices": ["18歳", "20歳", "25歳", "30歳", "40歳"], "answer_index": 1, "explanation": "日本の法律で定められている国民年金の加入年齢は20歳である。", "retry": {"question": "日本の法律で定められている国民年金の加入年齢は何歳からか。", "choices": ["18歳", "20歳", "25歳", "30歳", "40歳"], "answer_index": 1, "explanation": "日本の法律で定められている国民年金の加入年齢は20歳である。"}}, {"subject": "社会", "field": "歴史", "question": "江戸時代の徳川幕府の始まりはいつか。", "choices": ["1600年", "1603年", "1615年", "1620年", "1630年"], "answer_index": 1, "explanation": "江戸時代の徳川幕府の始まりは1603年である。", "retry": {"question": "江戸時代の徳川幕府の始まりはいつか。", "choices": ["1600年", "1603年", "1615年", "1620年", "1630年"], "answer_index": 1, "explanation": "江戸時代の徳川幕府の始まりは1603年である。"}}, {"subject": "英語", "field": "比較級", "question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではtallの比較級tallerが正解。", "retry": {"question": "She is ( ) than her sister.", "choices": ["tall", "taller", "tallest", "more tall", "most tall"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではtallの比較級tallerが正解。"}}, {"subject": "英語", "field": "不定詞", "question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではto不定詞が正解。", "retry": {"question": "I want ( ) to go shopping.", "choices": ["to", "at", "on", "by", "for"], "answer_index": 0, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではto不定詞が正解。"}}, {"subject": "英語", "field": "受動態", "question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではspokenが正解。", "retry": {"question": "English is ( ) all over the world.", "choices": ["speak", "spoke", "spoken", "speaking", "speaks"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではspokenが正解。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は主語の人称、数によって変化する。ここではisが正解。", "retry": {"question": "He ( ) a student.", "choices": ["am", "is", "are", "be", "was"], "answer_index": 1, "explanation": "be動詞は主語の人称、数によって変化する。ここではisが正解。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try it.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞は話し手の気持ちを表す。ここではshouldが正解。", "retry": {"question": "You ( ) try it.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞は話し手の気持ちを表す。ここではshouldが正解。"}}, {"subject": "英語", "field": "比較級", "question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではmore deliciousが正解。", "retry": {"question": "This cake is ( ) than the one we had yesterday.", "choices": ["delicious", "more delicious", "most delicious", "deliciously", "deliciousest"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではmore deliciousが正解。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listener"], "answer_index": 1, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではgerundが正解。", "retry": {"question": "I love ( ) music.", "choices": ["to listen", "listening", "listen", "listened", "listener"], "answer_index": 1, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではgerundが正解。"}}, {"subject": "英語", "field": "受動態", "question": "The play ( ) by a famous director.", "choices": ["direct", "directs", "directed", "directing", "director"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではdirectedが正解。", "retry": {"question": "The play ( ) by a famous director.", "choices": ["direct", "directs", "directed", "directing", "director"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではdirectedが正解。"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) from Canada.", "choices": ["am", "is", "are", "be", "been"], "answer_index": 2, "explanation": "be動詞は主語の人称、数によって変化する。ここではareが正解。", "retry": {"question": "They ( ) from Canada.", "choices": ["am", "is", "are", "be", "been"], "answer_index": 2, "explanation": "be動詞は主語の人称、数によって変化する。ここではareが正解。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak English fluently.", "choices": ["can", "could", "may", "might", "shall"], "answer_index": 0, "explanation": "助動詞は話し手の気持ちを表す。ここではcanが正解。", "retry": {"question": "You ( ) speak English fluently.", "choices": ["can", "could", "may", "might", "shall"], "answer_index": 0, "explanation": "助動詞は話し手の気持ちを表す。ここではcanが正解。"}}, {"subject": "英語", "field": "比較級", "question": "This book is ( ) than the last one I read.", "choices": ["interesting", "more interesting", "most interesting", "interested", "interestingly"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではmore interestingが正解。", "retry": {"question": "This book is ( ) than the last one I read.", "choices": ["interesting", "more interesting", "most interesting", "interested", "interestingly"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではmore interestingが正解。"}}, {"subject": "英語", "field": "不定詞", "question": "I hate ( ) homework.", "choices": ["to do", "doing", "do", "done", "does"], "answer_index": 1, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではgerundが正解。", "retry": {"question": "I hate ( ) homework.", "choices": ["to do", "doing", "do", "done", "does"], "answer_index": 1, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではgerundが正解。"}}, {"subject": "英語", "field": "受動態", "question": "The new policy ( ) by the government.", "choices": ["make", "makes", "made", "making", "maker"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではmadeが正解。", "retry": {"question": "The new policy ( ) by the government.", "choices": ["make", "makes", "made", "making", "maker"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではmadeが正解。"}}, {"subject": "英語", "field": "be動詞", "question": "She ( ) a doctor.", "choices": ["am", "is", "are", "be", "been"], "answer_index": 1, "explanation": "be動詞は主語の人称、数によって変化する。ここではisが正解。", "retry": {"question": "She ( ) a doctor.", "choices": ["am", "is", "are", "be", "been"], "answer_index": 1, "explanation": "be動詞は主語の人称、数によって変化する。ここではisが正解。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try to come early.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞は話し手の気持ちを表す。ここではshouldが正解。", "retry": {"question": "You ( ) try to come early.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞は話し手の気持ちを表す。ここではshouldが正解。"}}, {"subject": "英語", "field": "比較級", "question": "He is ( ) at soccer than his brother.", "choices": ["good", "better", "best", "goodly", "goodest"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではbetterが正解。", "retry": {"question": "He is ( ) at soccer than his brother.", "choices": ["good", "better", "best", "goodly", "goodest"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではbetterが正解。"}}, {"subject": "英語", "field": "不定詞", "question": "I love ( ) to the beach.", "choices": ["to go", "going", "go", "went", "goes"], "answer_index": 0, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではto不定詞が正解。", "retry": {"question": "I love ( ) to the beach.", "choices": ["to go", "going", "go", "went", "goes"], "answer_index": 0, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではto不定詞が正解。"}}, {"subject": "英語", "field": "受動態", "question": "The flowers ( ) in the garden.", "choices": ["plant", "plants", "planted", "planting", "planter"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではplantedが正解。", "retry": {"question": "The flowers ( ) in the garden.", "choices": ["plant", "plants", "planted", "planting", "planter"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではplantedが正解。"}}, {"subject": "英語", "field": "be動詞", "question": "They ( ) my friends.", "choices": ["am", "is", "are", "be", "been"], "answer_index": 2, "explanation": "be動詞は主語の人称、数によって変化する。ここではareが正解。", "retry": {"question": "They ( ) my friends.", "choices": ["am", "is", "are", "be", "been"], "answer_index": 2, "explanation": "be動詞は主語の人称、数によって変化する。ここではareが正解。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) speak up.", "choices": ["can", "could", "may", "might", "shall"], "answer_index": 0, "explanation": "助動詞は話し手の気持ちを表す。ここではcanが正解。", "retry": {"question": "You ( ) speak up.", "choices": ["can", "could", "may", "might", "shall"], "answer_index": 0, "explanation": "助動詞は話し手の気持ちを表す。ここではcanが正解。"}}, {"subject": "英語", "field": "比較級", "question": "This restaurant is ( ) than the last one we visited.", "choices": ["good", "better", "best", "goodly", "goodest"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではbetterが正解。", "retry": {"question": "This restaurant is ( ) than the last one we visited.", "choices": ["good", "better", "best", "goodly", "goodest"], "answer_index": 1, "explanation": "比較級は形容詞の前または後ろにmoreまたはlessを付けて表す。ここではbetterが正解。"}}, {"subject": "英語", "field": "不定詞", "question": "I hate ( ) TV all day.", "choices": ["to watch", "watching", "watch", "watched", "watches"], "answer_index": 1, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではgerundが正解。", "retry": {"question": "I hate ( ) TV all day.", "choices": ["to watch", "watching", "watch", "watched", "watches"], "answer_index": 1, "explanation": "不定詞はto不定詞と原形不定詞に分かれる。ここではgerundが正解。"}}, {"subject": "英語", "field": "受動態", "question": "The package ( ) by the courier service.", "choices": ["deliver", "delivers", "delivered", "delivering", "delivery"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではdeliveredが正解。", "retry": {"question": "The package ( ) by the courier service.", "choices": ["deliver", "delivers", "delivered", "delivering", "delivery"], "answer_index": 2, "explanation": "受動態はbe動詞+過去分詞で表す。ここではdeliveredが正解。"}}, {"subject": "英語", "field": "be動詞", "question": "He ( ) a teacher.", "choices": ["am", "is", "are", "be", "been"], "answer_index": 1, "explanation": "be動詞は主語の人称、数によって変化する。ここではisが正解。", "retry": {"question": "He ( ) a teacher.", "choices": ["am", "is", "are", "be", "been"], "answer_index": 1, "explanation": "be動詞は主語の人称、数によって変化する。ここではisが正解。"}}, {"subject": "英語", "field": "助動詞", "question": "You ( ) try to finish it on time.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞は話し手の気持ちを表す。ここではshouldが正解。", "retry": {"question": "You ( ) try to finish it on time.", "choices": ["must", "should", "will", "can", "may"], "answer_index": 1, "explanation": "助動詞は話し手の気持ちを表す。ここではshouldが正解。"}}];
+const LC=['a','b','c','d','e'];
+const NOTIFY_URL='https://script.google.com/macros/s/AKfycbyOa4De8zupkRe0tXU3lz18tWkPG4jg2HdVgUhFC_BnYrUDPqlvKCAS4Y4ccfEj8KWi/exec';
+const NOTIFY_SECRET='yuukeibotquiz2026';
+const DATE_STR='2026年6月1日(月)';
+const QUIZ_URL='https://kawakanpa.github.io/line-quiz-bot/quiz-2026-06-01.html';
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function init(){
+  let h='';
+  QS.forEach((q,i)=>{
+    const ch=q.choices.map((c,ci)=>`<label class="clabel" id="lbl-${i}-${ci}"><input type="radio" name="q${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    const rq=q.retry;
+    const rch=rq.choices.map((c,ci)=>`<label class="clabel" id="rlbl-${i}-${ci}"><input type="radio" name="rq${i}" value="${ci}"><span>${LC[ci]}. ${esc(c)}</span></label>`).join('');
+    h+=`<div class="qcard" id="card-${i}">
+<div class="qhead"><span class="qnum">問${i+1}</span><span class="tag">${esc(q.subject)} / ${esc(q.field)}</span></div>
+<div class="qtext">${esc(q.question)}</div>
+<div id="ch-${i}">${ch}</div>
+<div class="resarea" id="res-${i}">
+  <div id="bdg-${i}"></div>
+  <div class="expl">${esc(q.explanation)}</div>
+  <div class="rbtns" id="rbtns-${i}">
+    <button class="btn btn-retry" onclick="showRetry(${i})">わかった！練習問題を解く 🔄</button>
+  </div>
+</div>
+<div class="retrybox" id="retry-${i}">
+  <h4>🔄 もう一度チャレンジ！</h4>
+  <div class="qtext">${esc(rq.question)}</div>
+  <div id="rch-${i}">${rch}</div>
+  <button class="btn-confirm" id="rcbtn-${i}" onclick="submitRetry(${i})">確認する</button>
+  <div class="rresult" id="rres-${i}">
+    <div id="rbdg-${i}"></div>
+    <div class="expl">${esc(rq.explanation)}</div>
+  </div>
+</div>
+</div>`;
+  });
+  document.getElementById('qlist').innerHTML=h;
+}
+function submitAll(){
+  const missing=QS.reduce((a,_,i)=>{if(!document.querySelector(`input[name="q${i}"]:checked`))a.push(i+1);return a;},[]);
+  if(missing.length){alert(`問${missing.join('、')}がまだ答えていません！`);return;}
+  let cor=0;
+  const resList=[];
+  QS.forEach((q,i)=>{
+    const sv=parseInt(document.querySelector(`input[name="q${i}"]:checked`).value);
+    const ok=sv===q.answer_index;
+    if(ok)cor++;
+    resList.push({num:i+1,subject:q.subject,field:q.field,correct:ok});
+    document.querySelectorAll(`#ch-${i} .clabel`).forEach((l,li)=>{
+      if(li===q.answer_index)l.classList.add('hl-ok');
+      else if(li===sv&&!ok)l.classList.add('hl-ng');
+    });
+    document.querySelectorAll(`input[name="q${i}"]`).forEach(r=>r.disabled=true);
+    document.getElementById(`bdg-${i}`).innerHTML=ok?
+      '<span class="badge-ok">✓ 正解！</span>':
+      `<span class="badge-ng">✗ 不正解（正解: ${LC[q.answer_index]}）</span>`;
+    document.getElementById(`res-${i}`).style.display='block';
+    document.getElementById(`card-${i}`).classList.add(ok?'ok':'ng');
+    if(ok){const rb=document.getElementById(`rbtns-${i}`);if(rb)rb.style.display='none';}
+  });
+  const sc=document.getElementById('scorecard');
+  const isPerfect=cor===QS.length;
+  const topMsg=isPerfect?'🎉 全問正解！':'✅ 回答完了！';
+  sc.innerHTML=`<div style="font-size:1.4em;font-weight:700;color:#2e7d32;margin-bottom:8px">${topMsg}</div><div class="score-num">${cor}<span style="font-size:.5em;color:#666"> / ${QS.length}</span></div><div class="score-sub">正解率 ${Math.round(cor/QS.length*100)}%</div><p style="margin-top:10px;color:#555;font-size:.88em">各問題の解説を確認してね！</p>`;
+  sc.style.display='block';
+  document.getElementById('subwrap').style.display='none';
+  sc.scrollIntoView({behavior:'smooth'});
+  sendResultsNotification(cor,resList);
+}
+function markOk(i){document.getElementById(`rbtns-${i}`).innerHTML='<span class="ok-msg">✓ 理解しました！</span>';}
+function showRetry(i){
+  document.getElementById(`retry-${i}`).style.display='block';
+  document.getElementById(`rbtns-${i}`).style.display='none';
+  document.getElementById(`retry-${i}`).scrollIntoView({behavior:'smooth'});
+}
+function submitRetry(i){
+  const rq=QS[i].retry;
+  const sel=document.querySelector(`input[name="rq${i}"]:checked`);
+  if(!sel){alert('答えを選んでください！');return;}
+  const sv=parseInt(sel.value);
+  const ok=sv===rq.answer_index;
+  document.querySelectorAll(`#rch-${i} .clabel`).forEach((l,li)=>{
+    if(li===rq.answer_index)l.classList.add('hl-ok');
+    else if(li===sv&&!ok)l.classList.add('hl-ng');
+  });
+  document.querySelectorAll(`input[name="rq${i}"]`).forEach(r=>r.disabled=true);
+  document.getElementById(`rbdg-${i}`).innerHTML=ok?
+    '<span class="badge-ok">✓ 正解！よくできました！</span>':
+    `<span class="badge-ng">✗ 不正解（正解: ${LC[rq.answer_index]}）</span>`;
+  document.getElementById(`rres-${i}`).style.display='block';
+  document.getElementById(`rcbtn-${i}`).style.display='none';
+}
+function sendResultsNotification(cor,resList){
+  if(!NOTIFY_URL)return;
+  const payload=JSON.stringify({secret:NOTIFY_SECRET,type:'results',date:DATE_STR,score:cor,total:QS.length,results:resList,quiz_url:QUIZ_URL});
+  fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:payload}).catch(()=>{});
+  if(cor===QS.length){
+    const p=JSON.stringify({secret:NOTIFY_SECRET,type:'perfect',date:DATE_STR,total:QS.length,quiz_url:QUIZ_URL});
+    setTimeout(()=>fetch(NOTIFY_URL,{method:'POST',mode:'no-cors',body:p}).catch(()=>{}),500);
+  }
+}
+init();
+</script>
+</body>
+</html>
